@@ -83,7 +83,7 @@ export interface PeriodStats {
   wants_total: number;
   unclear_total: number;
   /** Daily totals across the period, gap-filled with zeroes. */
-  by_day: { date: string; total: number; needs: number; wants: number }[];
+  by_day: { date: string; total: number; needs: number; wants: number; unclear: number }[];
   /** Descending by total. */
   by_category: { category: string; total: number; count: number }[];
   /** Descending by amount, capped by the caller. */

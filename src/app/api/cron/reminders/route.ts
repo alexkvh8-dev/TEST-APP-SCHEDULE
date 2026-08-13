@@ -70,8 +70,8 @@ export async function GET(request: NextRequest) {
     if (!withinHours(hour, row.reminder_start_hour, row.reminder_end_hour)) continue;
 
     if (row.last_reminder_at) {
-      const since = now.getTime() - new Date(row.last_reminder_at).getTime();
-      if (since < REMINDER_COOLDOWN_MS) continue;
+      const sinceLastNudge = now.getTime() - new Date(row.last_reminder_at).getTime();
+      if (sinceLastNudge < REMINDER_COOLDOWN_MS) continue;
     }
 
     // Brand-new accounts get a moment to settle in before the first nudge.

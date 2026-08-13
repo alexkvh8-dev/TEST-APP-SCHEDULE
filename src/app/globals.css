@@ -1,0 +1,155 @@
+@import "tailwindcss";
+
+/*
+ * Tokens. Light values live on bare :root so a viewer with no explicit choice
+ * still gets a complete palette; dark values are redefined twice — once for the
+ * OS setting, once for the in-app toggle — so neither can lose to the other.
+ *
+ * Series colours are the validated categorical slots 1 and 2 (blue = needs,
+ * orange = wants). Unclassified spend uses muted ink rather than a third hue:
+ * it is an absence of information, not another category.
+ */
+:root {
+  color-scheme: light;
+
+  --page: #f9f9f7;
+  --surface-1: #fcfcfb;
+  --surface-2: #f2f1ed;
+
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #898781;
+
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+  --border: rgba(11, 11, 11, 0.1);
+
+  --series-needs: #2a78d6;
+  --series-wants: #eb6834;
+  --series-unclear: #898781;
+
+  --good: #006300;
+  --critical: #d03b3b;
+
+  --shadow: 0 1px 2px rgba(11, 11, 11, 0.06), 0 8px 24px rgba(11, 11, 11, 0.06);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --page: #0d0d0d;
+    --surface-1: #1a1a19;
+    --surface-2: #232322;
+
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted: #898781;
+
+    --grid: #2c2c2a;
+    --axis: #383835;
+    --border: rgba(255, 255, 255, 0.1);
+
+    --series-needs: #3987e5;
+    --series-wants: #d95926;
+    --series-unclear: #898781;
+
+    --good: #0ca30c;
+    --critical: #d03b3b;
+
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --page: #0d0d0d;
+  --surface-1: #1a1a19;
+  --surface-2: #232322;
+
+  --text-primary: #ffffff;
+  --text-secondary: #c3c2b7;
+  --text-muted: #898781;
+
+  --grid: #2c2c2a;
+  --axis: #383835;
+  --border: rgba(255, 255, 255, 0.1);
+
+  --series-needs: #3987e5;
+  --series-wants: #d95926;
+  --series-unclear: #898781;
+
+  --good: #0ca30c;
+  --critical: #d03b3b;
+
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+@theme inline {
+  --color-page: var(--page);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--text-primary);
+  --color-ink-secondary: var(--text-secondary);
+  --color-ink-muted: var(--text-muted);
+  --color-hairline: var(--border);
+  --color-needs: var(--series-needs);
+  --color-wants: var(--series-wants);
+  --color-unclear: var(--series-unclear);
+  --color-good: var(--good);
+  --color-critical: var(--critical);
+  --font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  background: var(--page);
+  color: var(--text-primary);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  overscroll-behavior-y: none;
+}
+
+body {
+  /* Room for the fixed bottom nav plus the home indicator on iOS. */
+  padding-bottom: calc(64px + env(safe-area-inset-bottom));
+}
+
+/* Numbers that stack vertically must align; standalone figures should not. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Charts scroll inside their own container — the page never scrolls sideways. */
+.scroll-x {
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.rise {
+  animation: rise 0.22s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

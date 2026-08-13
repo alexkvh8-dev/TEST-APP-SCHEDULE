@@ -20,9 +20,9 @@ export function buildStats(
   let wants = 0;
   let unclear = 0;
 
-  const dayMap = new Map<string, { total: number; needs: number; wants: number }>();
+  const dayMap = new Map<string, { total: number; needs: number; wants: number; unclear: number }>();
   for (const date of eachDay(range.start, range.end)) {
-    dayMap.set(date, { total: 0, needs: 0, wants: 0 });
+    dayMap.set(date, { total: 0, needs: 0, wants: 0, unclear: 0 });
   }
 
   const categoryMap = new Map<string, { total: number; count: number }>();
@@ -40,6 +40,7 @@ export function buildStats(
       bucket.total += amount;
       if (e.need_level === "need") bucket.needs += amount;
       else if (e.need_level === "want") bucket.wants += amount;
+      else bucket.unclear += amount;
     }
 
     const category = e.category || "Other";
@@ -64,6 +65,7 @@ export function buildStats(
       total: round(v.total),
       needs: round(v.needs),
       wants: round(v.wants),
+      unclear: round(v.unclear),
     })),
     by_category: [...categoryMap.entries()]
       .map(([category, v]) => ({ category, total: round(v.total), count: v.count }))

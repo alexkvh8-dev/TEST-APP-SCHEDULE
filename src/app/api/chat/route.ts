@@ -40,13 +40,9 @@ async function buildContext(
     return "They have not logged any expenses in the last 30 days yet.";
   }
 
-  const stats = buildStats(
-    expenses,
-    { ...month, start: month.start, end: month.end },
-    profile.base_currency,
-    profile.timezone,
-    0,
-  );
+  // Totals cover every row passed in, i.e. the last 30 days; the range only
+  // shapes the per-day buckets, which this context does not use.
+  const stats = buildStats(expenses, month, profile.base_currency, profile.timezone, 0);
   const money = (n: number) => formatMoney(n, profile.base_currency);
 
   const lines = [
@@ -55,7 +51,7 @@ async function buildContext(
       ? `Monthly budget: ${money(Number(profile.monthly_budget))}.`
       : "No monthly budget set.",
     `Last 30 days: ${money(expenses.reduce((s, e) => s + Number(e.base_amount), 0))} across ${expenses.length} purchases.`,
-    `Needs ${money(stats.needs_total)} | Wants ${money(stats.wants_total)} | Unclassified ${money(stats.unclear_total)} (this calendar month).`,
+    `Of that: needs ${money(stats.needs_total)}, wants ${money(stats.wants_total)}, unclassified ${money(stats.unclear_total)}.`,
     "",
     "Top categories (last 30 days):",
     ...stats.by_category.slice(0, 8).map((c) => `- ${c.category}: ${money(c.total)} (${c.count}x)`),
