@@ -194,3 +194,58 @@ but you can skip Vercel entirely while you are trying it out.
 | No install prompt on iPhone | You are not in Safari, or you are looking for a button — it is under the **Share** menu |
 | Notifications never arrive | Check Part 5 is done and the Actions run went green; on iPhone, check you opened it from the home-screen icon |
 | Everything works but summaries are basic | No `GEMINI_API_KEY` set — that is the built-in rules engine doing its job. Add the key and redeploy |
+
+---
+
+## Want a real `.apk` instead?
+
+Chrome's **Install** already gives you a proper Android app (a WebAPK) — its own
+icon, its own entry in the app drawer and in Settings → Apps, no browser UI, and
+it uninstalls like any other app. For most people that is the end of the story.
+
+If you specifically want an **`.apk` file** — to sideload, to share with someone,
+or to put on the Play Store — build one from the same URL. It wraps the PWA in a
+Trusted Web Activity, so it stays a single codebase and keeps updating itself
+whenever the site redeploys.
+
+### Build it (free, in a browser)
+
+1. Go to **[pwabuilder.com](https://www.pwabuilder.com)**
+2. Enter your app's URL → **Start**
+3. **Package for stores** → **Android** → **Generate**
+4. Download the zip. Inside you get:
+   - `app-release-signed.apk` — sideload this straight onto a phone
+   - `signing.keystore` + a password — **keep these safe**, you need the same
+     key to ship any future update
+   - `assetlinks.json` — contains your SHA-256 fingerprint
+
+### Then remove the URL bar
+
+A freshly built APK shows a Chrome address bar across the top until Android can
+confirm the app and the website share an owner. Two environment variables fix it:
+
+1. Open the `assetlinks.json` from the zip and copy the value of
+   `sha256_cert_fingerprints` (a long `AA:BB:CC:…` string) and `package_name`
+2. In **Vercel → Settings → Environment Variables** add:
+
+   | Name | Value |
+   |---|---|
+   | `ANDROID_PACKAGE_NAME` | the `package_name` from the file |
+   | `ANDROID_CERT_FINGERPRINT` | the `AA:BB:…` fingerprint |
+
+3. **Redeploy** (Deployments → ⋯ → Redeploy)
+4. Check it worked: open `https://your-app.vercel.app/.well-known/assetlinks.json`
+   — it should show your fingerprint, not `[]`
+5. Reinstall the APK. The URL bar is gone.
+
+### Installing the APK on your phone
+
+Copy the `.apk` across, tap it, and allow **Install unknown apps** for whichever
+app you opened it from. Android will warn you it is from an unknown source —
+that is expected for any app not from the Play Store.
+
+### Play Store
+
+The same zip contains an `.aab` for the Play Store, but a Play developer account
+is a **one-off $25**. Everything else in this project is free, so this is the one
+place you would spend money — and only if you want it publicly listed.
