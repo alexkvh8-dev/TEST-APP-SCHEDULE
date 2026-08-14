@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 
+import { ServiceWorkerRegistrar } from "@/components/ServiceWorkerRegistrar";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -28,7 +29,16 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        {children}
+        {/*
+          Registered at the root, not inside the signed-in layout: the sign-in
+          screen is where every new visitor lands, and the browser will not
+          offer "Install" until a service worker is registered on the page
+          being viewed.
+        */}
+        <ServiceWorkerRegistrar />
+      </body>
     </html>
   );
 }
