@@ -7,6 +7,10 @@ monthly read on it.
 **It runs on free tiers end to end.** Nothing here needs a paid plan, and nothing
 needs a credit card.
 
+> **Just want it on your phone?** [**INSTALL.md**](INSTALL.md) is a click-by-click
+> walkthrough — deploy it free, then install it on Android, iPhone and desktop.
+> No terminal required.
+
 - **Email + password sign-in** — your data lives in the cloud against your email.
   Sign in on a phone, a laptop, anything, and everything is there.
 - **Two-tap logging** — a `+` button bottom-right, an item, an amount. PKR by
