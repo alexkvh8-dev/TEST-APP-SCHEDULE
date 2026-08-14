@@ -1,0 +1,78 @@
+# Free scheduler for the two background jobs.
+#
+# Vercel's Hobby plan only runs cron once a day, which is no good for a
+# 90-minute inactivity nudge. GitHub Actions runs this for free instead
+# (public repos are unlimited; private repos get 2,000 minutes/month and each
+# run here costs a few seconds).
+#
+# Setup — one time:
+#   Repo → Settings → Secrets and variables → Actions
+#     Secret   CRON_SECRET  = the same value as in your Vercel env vars
+#     Variable APP_URL      = https://your-app.vercel.app   (no trailing slash)
+#
+# Two caveats worth knowing:
+#   - GitHub queues scheduled jobs on shared runners, so a run can land a few
+#     minutes late. Harmless here: both endpoints re-check the real state and
+#     are safe to call more often than needed.
+#   - GitHub disables scheduled workflows after 60 days with no commits to the
+#     repo. Push anything, or use the "Run workflow" button, to re-arm it.
+#     cron-job.org is an alternative with neither caveat, also free.
+
+name: Scheduled jobs
+
+on:
+  schedule:
+    # Inactivity nudge — every 15 minutes.
+    - cron: "*/15 * * * *"
+    # Daily/weekly/monthly reports — hourly, on the hour.
+    - cron: "0 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: paisa-cron
+  cancel-in-progress: false
+
+jobs:
+  reminders:
+    name: Inactivity nudge
+    runs-on: ubuntu-latest
+    # Both schedules fire together on the hour; keep the nudge on one of them.
+    if: github.event.schedule == '*/15 * * * *' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Ping /api/cron/reminders
+        env:
+          APP_URL: ${{ vars.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$APP_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "::error::Set the APP_URL repository variable and the CRON_SECRET secret."
+            exit 1
+          fi
+          code=$(curl -sS -o /tmp/body.txt -w '%{http_code}' \
+            --max-time 120 --retry 2 --retry-delay 5 \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "$APP_URL/api/cron/reminders")
+          echo "HTTP $code"; cat /tmp/body.txt; echo
+          [ "$code" = "200" ]
+
+  reports:
+    name: Scheduled reports
+    runs-on: ubuntu-latest
+    # Only on the hourly trigger; the 15-minute one just does the nudge.
+    if: github.event.schedule == '0 * * * *' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Ping /api/cron/reports
+        env:
+          APP_URL: ${{ vars.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$APP_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "::error::Set the APP_URL repository variable and the CRON_SECRET secret."
+            exit 1
+          fi
+          code=$(curl -sS -o /tmp/body.txt -w '%{http_code}' \
+            --max-time 300 --retry 2 --retry-delay 10 \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "$APP_URL/api/cron/reports")
+          echo "HTTP $code"; cat /tmp/body.txt; echo
+          [ "$code" = "200" ]

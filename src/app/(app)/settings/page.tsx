@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { SettingsScreen } from "@/components/SettingsScreen";
+import { providerLabel } from "@/lib/ai";
 import { getOrCreateProfile } from "@/lib/profile";
 import { createClient } from "@/lib/supabase/server";
 
@@ -16,5 +17,5 @@ export default async function SettingsPage() {
 
   const profile = await getOrCreateProfile(supabase, user.id, user.user_metadata);
 
-  return <SettingsScreen profile={profile} />;
+  return <SettingsScreen profile={profile} aiProvider={providerLabel()} />;
 }

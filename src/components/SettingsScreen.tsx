@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { CURRENCIES } from "@/lib/currency";
@@ -42,7 +43,13 @@ const selectStyle = {
   color: "var(--text-primary)",
 } as const;
 
-export function SettingsScreen({ profile: initial }: { profile: Profile }) {
+export function SettingsScreen({
+  profile: initial,
+  aiProvider,
+}: {
+  profile: Profile;
+  aiProvider: string;
+}) {
   const [profile, setProfile] = useState(initial);
   const [status, setStatus] = useState<string | null>(null);
   const [pushState, setPushState] = useState<"unknown" | "on" | "off" | "unsupported">("unknown");
@@ -301,8 +308,13 @@ export function SettingsScreen({ profile: initial }: { profile: Profile }) {
         </Row>
       </section>
 
-      <section className="rounded-2xl px-4 py-2" style={card}>
-        <Row label={profile.full_name ?? "Signed in"} hint={profile.email ?? undefined}>
+      <h2 className="mt-1 text-sm font-semibold">Account</h2>
+
+      <section className="rounded-2xl px-4" style={card}>
+        <Row
+          label={profile.email ?? "Signed in"}
+          hint="Sign in with this email on any device to see all your data"
+        >
           <form action="/auth/signout" method="post">
             <button
               type="submit"
@@ -312,6 +324,24 @@ export function SettingsScreen({ profile: initial }: { profile: Profile }) {
               Sign out
             </button>
           </form>
+        </Row>
+
+        <div style={{ borderTop: "1px solid var(--grid)" }} />
+
+        <Row label="Password" hint="Change the password for this account">
+          <Link
+            href="/reset-password"
+            className="inline-block rounded-lg px-3 py-2 text-sm font-medium"
+            style={{ background: "var(--surface-2)", color: "var(--text-secondary)" }}
+          >
+            Change
+          </Link>
+        </Row>
+
+        <div style={{ borderTop: "1px solid var(--grid)" }} />
+
+        <Row label="Summaries written by" hint={aiProvider}>
+          <span />
         </Row>
       </section>
     </div>

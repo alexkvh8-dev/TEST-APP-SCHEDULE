@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { generateInsight } from "./anthropic";
+import { generateInsight } from "./ai";
 import { periodLabel, periodRange, previousRange, utcWindow, type PeriodRange } from "./periods";
 import { buildStats } from "./stats";
 import type { Expense, InsightPayload, Period, PeriodStats, Profile } from "./types";

@@ -1,6 +1,6 @@
 import { after, NextResponse, type NextRequest } from "next/server";
 
-import { classifyExpense } from "@/lib/anthropic";
+import { classifyExpense } from "@/lib/ai";
 import { DEFAULT_CURRENCY, isSupportedCurrency } from "@/lib/currency";
 import { periodRange } from "@/lib/periods";
 import { getOrCreateProfile } from "@/lib/profile";

@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 
-import { SignInButton } from "@/components/SignInButton";
+import { AuthForm } from "@/components/AuthForm";
 
 export const metadata = { title: "Sign in — Paisa" };
 
@@ -14,7 +14,7 @@ export default async function LoginPage({
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center px-6 py-12">
       <div className="w-full max-w-sm">
-        <div className="mb-10 text-center">
+        <div className="mb-8 text-center">
           <div
             className="mx-auto mb-5 flex size-16 items-center justify-center rounded-2xl text-3xl"
             style={{ background: "var(--series-needs)", color: "#fff" }}
@@ -44,11 +44,11 @@ export default async function LoginPage({
         )}
 
         <Suspense>
-          <SignInButton next={next} />
+          <AuthForm next={next} />
         </Suspense>
 
         <ul
-          className="mt-10 flex flex-col gap-3 text-sm"
+          className="mt-8 flex flex-col gap-3 text-sm"
           style={{ color: "var(--text-secondary)" }}
         >
           <li className="flex gap-3">

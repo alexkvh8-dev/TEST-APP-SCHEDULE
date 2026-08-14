@@ -1,30 +1,23 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import {
-  anthropic,
-  coachSystemPrompt,
-  hasAnthropicKey,
-  isObviouslyOffTopic,
-  MODEL,
-} from "@/lib/anthropic";
+import { isObviouslyOffTopic, OFF_TOPIC_REPLY, streamCoach } from "@/lib/ai";
 import { formatMoney } from "@/lib/currency";
 import { periodRange } from "@/lib/periods";
 import { getOrCreateProfile } from "@/lib/profile";
 import { buildStats } from "@/lib/stats";
 import { createClient } from "@/lib/supabase/server";
-import type { Expense, Profile } from "@/lib/types";
+import type { Expense, PeriodStats, Profile } from "@/lib/types";
 
 export const maxDuration = 60;
 
-const OFF_TOPIC_REPLY =
-  "I only cover money — spending, saving, budgeting and your expenses here. " +
-  "Ask me something about that and I'm all yours.";
-
-/** A compact picture of the last 30 days, cheap enough to send every turn. */
+/**
+ * A compact picture of the last 30 days. The text goes to the model; the stats
+ * object backs the rules engine when no provider is configured.
+ */
 async function buildContext(
   supabase: Awaited<ReturnType<typeof createClient>>,
   profile: Profile,
-): Promise<string> {
+): Promise<{ context: string; stats: PeriodStats }> {
   const month = periodRange("monthly", profile.timezone);
   const thirtyDaysAgo = new Date(Date.now() - 30 * 86_400_000);
 
@@ -36,13 +29,15 @@ async function buildContext(
     .order("spent_at", { ascending: false });
 
   const expenses = (data ?? []) as Expense[];
-  if (!expenses.length) {
-    return "They have not logged any expenses in the last 30 days yet.";
-  }
 
   // Totals cover every row passed in, i.e. the last 30 days; the range only
   // shapes the per-day buckets, which this context does not use.
   const stats = buildStats(expenses, month, profile.base_currency, profile.timezone, 0);
+
+  if (!expenses.length) {
+    return { context: "They have not logged any expenses in the last 30 days yet.", stats };
+  }
+
   const money = (n: number) => formatMoney(n, profile.base_currency);
 
   const lines = [
@@ -50,7 +45,7 @@ async function buildContext(
     profile.monthly_budget
       ? `Monthly budget: ${money(Number(profile.monthly_budget))}.`
       : "No monthly budget set.",
-    `Last 30 days: ${money(expenses.reduce((s, e) => s + Number(e.base_amount), 0))} across ${expenses.length} purchases.`,
+    `Last 30 days: ${money(stats.total)} across ${expenses.length} purchases.`,
     `Of that: needs ${money(stats.needs_total)}, wants ${money(stats.wants_total)}, unclassified ${money(stats.unclear_total)}.`,
     "",
     "Top categories (last 30 days):",
@@ -59,10 +54,13 @@ async function buildContext(
     "Most recent purchases:",
     ...expenses
       .slice(0, 15)
-      .map((e) => `- ${e.spent_at.slice(0, 10)} ${e.item}: ${money(Number(e.base_amount))} [${e.need_level}]`),
+      .map(
+        (e) =>
+          `- ${e.spent_at.slice(0, 10)} ${e.item}: ${money(Number(e.base_amount))} [${e.need_level}]`,
+      ),
   ];
 
-  return lines.join("\n");
+  return { context: lines.join("\n"), stats };
 }
 
 /** GET /api/chat — conversation history. */
@@ -103,10 +101,6 @@ export async function POST(request: NextRequest) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not signed in" }, { status: 401 });
 
-  if (!hasAnthropicKey()) {
-    return NextResponse.json({ error: "ANTHROPIC_API_KEY is not configured" }, { status: 503 });
-  }
-
   let body: { message?: unknown };
   try {
     body = await request.json();
@@ -122,7 +116,7 @@ export async function POST(request: NextRequest) {
 
   await supabase.from("chat_messages").insert({ user_id: user.id, role: "user", content: message });
 
-  // Fast path: refuse plainly without spending a model call.
+  // Fast path: refuse plainly without spending a request against the quota.
   if (isObviouslyOffTopic(message)) {
     await supabase
       .from("chat_messages")
@@ -133,7 +127,7 @@ export async function POST(request: NextRequest) {
   }
 
   const profile = await getOrCreateProfile(supabase, user.id, user.user_metadata);
-  const context = await buildContext(supabase, profile);
+  const { context, stats } = await buildContext(supabase, profile);
 
   const { data: history } = await supabase
     .from("chat_messages")
@@ -142,40 +136,18 @@ export async function POST(request: NextRequest) {
     .order("created_at", { ascending: false })
     .limit(21); // 20 previous turns + the message just inserted
 
-  const messages = (history ?? [])
+  const turns = (history ?? [])
     .reverse()
     .map((m) => ({ role: m.role as "user" | "assistant", content: m.content as string }));
-
-  const stream = anthropic().messages.stream({
-    model: MODEL,
-    max_tokens: 2000,
-    output_config: { effort: "low" },
-    system: [
-      {
-        type: "text",
-        text: coachSystemPrompt(context),
-        cache_control: { type: "ephemeral" },
-      },
-    ],
-    messages,
-  });
 
   const encoder = new TextEncoder();
   const readable = new ReadableStream<Uint8Array>({
     async start(controller) {
       let full = "";
       try {
-        stream.on("text", (delta) => {
-          full += delta;
-          controller.enqueue(encoder.encode(delta));
-        });
-        const final = await stream.finalMessage();
-        if (final.stop_reason === "refusal") {
-          const note = full ? "" : OFF_TOPIC_REPLY;
-          if (note) {
-            full = note;
-            controller.enqueue(encoder.encode(note));
-          }
+        for await (const chunk of streamCoach(context, turns, stats)) {
+          full += chunk;
+          controller.enqueue(encoder.encode(chunk));
         }
       } catch {
         const note = "\n\nSomething went wrong reaching the coach. Try again in a moment.";
@@ -189,9 +161,6 @@ export async function POST(request: NextRequest) {
             .insert({ user_id: user.id, role: "assistant", content: full.trim() });
         }
       }
-    },
-    cancel() {
-      stream.abort();
     },
   });
 
