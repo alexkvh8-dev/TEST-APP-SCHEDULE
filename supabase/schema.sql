@@ -43,7 +43,7 @@ create table if not exists public.expenses (
   rate_to_base numeric(18, 8) not null default 1,
   note         text,
   category     text,
-  -- 'need' | 'want' | 'unclear' — set by the Claude classifier, editable by the user
+  -- 'need' | 'want' | 'unclear' — set by the classifier, editable by the user
   need_level   text          not null default 'unclear'
                              check (need_level in ('need', 'want', 'unclear')),
   spent_at     timestamptz   not null default now(),
@@ -136,7 +136,7 @@ create policy "own push subscriptions" on public.push_subscriptions
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 -- ---------------------------------------------------------------------
--- Auto-create a profile row when a user signs up with Google
+-- Auto-create a profile row when a user signs up
 -- ---------------------------------------------------------------------
 create or replace function public.handle_new_user()
 returns trigger
