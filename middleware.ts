@@ -53,9 +53,11 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Everything except static assets, the service worker, the manifest and
-     * the cron endpoints (which authenticate with CRON_SECRET, not a cookie).
+     * Everything except static assets, the service worker, the manifest, the
+     * cron endpoints (which authenticate with CRON_SECRET, not a cookie) and
+     * the Android asset-links file, which Google's verifier fetches with no
+     * session and must never be redirected to the sign-in page.
      */
-    "/((?!_next/static|_next/image|favicon.ico|icons/|manifest.webmanifest|sw.js|api/cron).*)",
+    "/((?!_next/static|_next/image|favicon.ico|icons/|manifest.webmanifest|sw.js|api/cron|api/assetlinks|.well-known).*)",
   ],
 };
