@@ -7,8 +7,11 @@
 #
 # Setup — one time:
 #   Repo → Settings → Secrets and variables → Actions
-#     Secret   CRON_SECRET  = the same value as in your Vercel env vars
 #     Variable APP_URL      = https://your-app.vercel.app   (no trailing slash)
+#     Secret   CRON_SECRET  = the same value as in your Vercel env vars
+#
+# Until both of those exist the jobs skip themselves and the run passes, so an
+# unconfigured repo never emails you a failure every 15 minutes.
 #
 # Two caveats worth knowing:
 #   - GitHub queues scheduled jobs on shared runners, so a run can land a few
@@ -33,21 +36,41 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Secrets cannot be read from a job-level `if`, so this job reads them and
+  # publishes a plain boolean the other jobs can gate on.
+  preflight:
+    name: Check configuration
+    runs-on: ubuntu-latest
+    outputs:
+      configured: ${{ steps.check.outputs.configured }}
+    steps:
+      - id: check
+        env:
+          APP_URL: ${{ vars.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -n "$APP_URL" ] && [ -n "$CRON_SECRET" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+            echo "Configured for $APP_URL"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Scheduled jobs are idle. Set the APP_URL repository variable and the CRON_SECRET secret to switch them on."
+          fi
+
   reminders:
     name: Inactivity nudge
-    runs-on: ubuntu-latest
+    needs: preflight
     # Both schedules fire together on the hour; keep the nudge on one of them.
-    if: github.event.schedule == '*/15 * * * *' || github.event_name == 'workflow_dispatch'
+    if: >-
+      needs.preflight.outputs.configured == 'true' &&
+      (github.event.schedule == '*/15 * * * *' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
     steps:
       - name: Ping /api/cron/reminders
         env:
           APP_URL: ${{ vars.APP_URL }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
-          if [ -z "$APP_URL" ] || [ -z "$CRON_SECRET" ]; then
-            echo "::error::Set the APP_URL repository variable and the CRON_SECRET secret."
-            exit 1
-          fi
           code=$(curl -sS -o /tmp/body.txt -w '%{http_code}' \
             --max-time 120 --retry 2 --retry-delay 5 \
             -H "Authorization: Bearer $CRON_SECRET" \
@@ -57,19 +80,18 @@ jobs:
 
   reports:
     name: Scheduled reports
-    runs-on: ubuntu-latest
+    needs: preflight
     # Only on the hourly trigger; the 15-minute one just does the nudge.
-    if: github.event.schedule == '0 * * * *' || github.event_name == 'workflow_dispatch'
+    if: >-
+      needs.preflight.outputs.configured == 'true' &&
+      (github.event.schedule == '0 * * * *' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
     steps:
       - name: Ping /api/cron/reports
         env:
           APP_URL: ${{ vars.APP_URL }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
-          if [ -z "$APP_URL" ] || [ -z "$CRON_SECRET" ]; then
-            echo "::error::Set the APP_URL repository variable and the CRON_SECRET secret."
-            exit 1
-          fi
           code=$(curl -sS -o /tmp/body.txt -w '%{http_code}' \
             --max-time 300 --retry 2 --retry-delay 10 \
             -H "Authorization: Bearer $CRON_SECRET" \
