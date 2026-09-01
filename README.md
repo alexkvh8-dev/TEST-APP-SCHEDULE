@@ -47,14 +47,27 @@ needs a credit card.
 
 ## What each piece costs
 
-| Piece | Service | Cost |
-|---|---|---|
-| Database + login | Supabase free tier | Free — 500 MB, unlimited API requests |
-| Hosting | Vercel Hobby | Free |
-| Scheduled jobs | GitHub Actions | Free |
-| Push notifications | Web Push (VAPID) | Free — no service, your server sends them |
-| Need/want sorting, summaries, coach | Google Gemini free tier | Free — no card needed |
-| *(optional)* better summaries | Anthropic Claude | **Paid** — skip it unless you want it |
+| Piece | Service | Cost | Runs out when |
+|---|---|---|---|
+| Database + login | Supabase free tier | Free | 500 MB of data, or 50,000 monthly users |
+| Hosting | Vercel Hobby | Free | You start charging for the app — Hobby is non-commercial, see below |
+| Scheduled jobs | GitHub Actions | Free | 2,000 minutes/month on a private repo; unlimited if public |
+| Push notifications | Web Push (VAPID) | Free | Never — your own server sends them, there is no service in between |
+| Need/want sorting, summaries, coach | Google Gemini free tier | Free | Roughly 10 requests a minute; the app falls back to its own rules instead of failing |
+| Email to other people | Resend / Brevo | Free | 3,000/month (Resend) or 300/day (Brevo) |
+| **A domain** | Porkbun, Cloudflare, Vercel | **$1–10/year** | The only recurring cost, and only needed for email |
+| *(optional)* better summaries | Anthropic Claude | **Paid** | Skip it unless you want it — Gemini is free and good |
+
+**Two caveats worth knowing before you invite anyone:**
+
+- **Vercel's Hobby plan is for non-commercial use.** Running FinX for yourself
+  and friends is fine. The moment you charge for it, run ads, or use it for a
+  business, their terms require **Pro at $20/month**. Nothing breaks
+  technically — it is a licensing line, and worth knowing before you build a
+  business on it.
+- **Supabase pauses free projects after 7 days with no activity.** The cron
+  workflow in this repo pings it every 15 minutes, so in practice this never
+  happens to you. Worth remembering if you ever switch the scheduler off.
 
 **If you add no AI key at all, the app still works.** Need/want sorting falls back
 to a built-in keyword engine, summaries are generated from your actual numbers,
