@@ -38,14 +38,15 @@ Everything below is done in a browser. **No terminal needed.**
      protects accounts, none of which involves email.
    - **Save**.
 
-   The confirmation email Supabase sends by default contains a **link**. The
-   app handles that: after you sign up it sits on "check your email" and moves
-   on by itself the moment you click the link, even in another tab.
-8. **Skip the email templates.** Supabase keeps them read-only until the
-   project has its own SMTP, and you do not need to touch them — the default
-   link works. Only if other people will sign up do you need
-   [Sending real email to other people](#sending-real-email-to-other-people)
-   below — which you do need before you share the app with anyone.
+   If you do switch confirmation on later, the app is ready for it: the email
+   Supabase sends carries a **link**, and after signup the app sits on "check
+   your email" and moves on by itself the moment that link is clicked, even in
+   another tab.
+8. **Skip the email templates.** Supabase keeps them read-only until the project
+   has its own SMTP, and nothing here needs them. The one thing that does want
+   working email is **"Forgot password"** — until you set sending up, reset a
+   password yourself under **Authentication → Users**. When you are ready, see
+   [Sending real email to other people](#sending-real-email-to-other-people).
 9. Left sidebar → **Project Settings** (gear) → **API Keys**. Keep this tab open —
    you need three values in a moment:
    - **Project URL**
