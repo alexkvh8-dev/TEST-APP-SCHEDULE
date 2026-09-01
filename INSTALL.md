@@ -113,11 +113,21 @@ a password. You are in.
 
 ## Part 2 — Install on your phone
 
-### Android (Chrome)
+### Android (Chrome) — the recommended route
 
-1. Open your Vercel URL in **Chrome**.
+Chrome's **Install** does not make a shortcut. It builds a **WebAPK**: a real
+Android app, signed by Google's build service, that appears in the app drawer
+and in Settings → Apps and uninstalls like any other. It never shows a URL bar,
+and it needs no Digital Asset Links, no fingerprints and no verification —
+Chrome made the app itself, so the trust is implicit.
+
+1. Open your Vercel URL in **Chrome**. It must be Chrome.
 2. You will usually get an **Install app** banner at the bottom — tap it.
 3. If not: **⋮** menu (top right) → **Add to Home screen** → **Install**.
+
+> **No Install option?** If you have previously sideloaded the `.apk`, uninstall
+> it first. While it is installed it claims the site's scope, so Chrome treats
+> the app as already installed and stops offering Install.
 
 ### iPhone / iPad (Safari — it must be Safari)
 
@@ -379,6 +389,20 @@ confirm the app and the website share an owner. Two environment variables fix it
 Copy the `.apk` across, tap it, and allow **Install unknown apps** for whichever
 app you opened it from. Android will warn you it is from an unknown source —
 that is expected for any app not from the Play Store.
+
+### If the APK keeps showing the URL bar
+
+A TWA is rendered by Chrome, and **only Chrome**. If the phone's default browser
+is something else — Mi Browser, Samsung Internet — the APK opens through that
+instead, and those have no TWA support, so the address bar is always there no
+matter how correct your asset links are. Common on Xiaomi and Samsung devices.
+
+Check **Settings → Apps → Default apps → Browser** and set it to Chrome.
+
+If you would rather not depend on that, use Chrome's **Install** (above)
+instead. A WebAPK needs no verification at all and cannot show a URL bar, which
+makes the whole class of problem go away. The `.apk` is worth the trouble only
+when you need a file to hand around or to upload to the Play Store.
 
 ### The Windows package, while you are there
 
