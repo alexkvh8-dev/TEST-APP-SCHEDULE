@@ -14,17 +14,31 @@ import { NextResponse } from "next/server";
  */
 export const dynamic = "force-dynamic";
 
+/**
+ * A SHA-256 fingerprint is exactly 32 bytes, printed as colon-separated hex —
+ * 95 characters. Anything else is a typo or, more often, a placeholder pasted
+ * out of a set-up guide.
+ */
+const FINGERPRINT = /^[0-9A-F]{2}(:[0-9A-F]{2}){31}$/;
+
+/** Reverse-DNS-ish: dot-separated segments, each starting with a letter. */
+const PACKAGE_NAME = /^[a-zA-Z][a-zA-Z0-9_]*(\.[a-zA-Z][a-zA-Z0-9_]*)+$/;
+
 export async function GET() {
   const fingerprints = (process.env.ANDROID_CERT_FINGERPRINT ?? "")
     .split(",")
     .map((f) => f.trim().toUpperCase())
-    .filter(Boolean);
+    // Serving a malformed value is worse than serving none: Google reports
+    // ERROR_CODE_MALFORMED_CONTENT for the whole file, which reads like the
+    // server is broken rather than like one env var is wrong.
+    .filter((f) => FINGERPRINT.test(f));
 
   const packageName = process.env.ANDROID_PACKAGE_NAME?.trim();
+  const validPackage = packageName && PACKAGE_NAME.test(packageName) ? packageName : null;
 
-  // No APK yet: return a valid, empty statement list rather than a 404, so
-  // verification fails cleanly instead of looking like a broken server.
-  if (!fingerprints.length || !packageName) {
+  // Not configured, or configured wrongly: a valid empty statement list. The
+  // app just keeps its URL bar, which is a visible, self-explaining failure.
+  if (!fingerprints.length || !validPackage) {
     return NextResponse.json([], {
       headers: { "Cache-Control": "public, max-age=300" },
     });
@@ -36,7 +50,7 @@ export async function GET() {
         relation: ["delegate_permission/common.handle_all_urls"],
         target: {
           namespace: "android_app",
-          package_name: packageName,
+          package_name: validPackage,
           sha256_cert_fingerprints: fingerprints,
         },
       },

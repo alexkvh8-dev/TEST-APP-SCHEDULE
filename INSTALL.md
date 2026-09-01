@@ -343,19 +343,36 @@ whenever the site redeploys.
 A freshly built APK shows a Chrome address bar across the top until Android can
 confirm the app and the website share an owner. Two environment variables fix it:
 
-1. Open the `assetlinks.json` from the zip and copy the value of
-   `sha256_cert_fingerprints` (a long `AA:BB:CC:…` string) and `package_name`
-2. In **Vercel → Settings → Environment Variables** add:
+1. Open the `assetlinks.json` from the zip. Copy **the real values** out of it —
+   `package_name`, and the string inside `sha256_cert_fingerprints`.
+
+   > The fingerprint is **95 characters**: 32 pairs of hex separated by colons.
+   > If what you copied is short, or contains an ellipsis, or has quotes or
+   > square brackets around it, you have grabbed an example instead of the
+   > value. Google reports that as `ERROR_CODE_MALFORMED_CONTENT`, which looks
+   > like a broken server rather than a wrong setting.
+
+2. In **Vercel → Environments → Production** add:
 
    | Name | Value |
    |---|---|
    | `ANDROID_PACKAGE_NAME` | the `package_name` from the file |
-   | `ANDROID_CERT_FINGERPRINT` | the `AA:BB:…` fingerprint |
+   | `ANDROID_CERT_FINGERPRINT` | the 95-character fingerprint from the file |
 
 3. **Redeploy** (Deployments → ⋯ → Redeploy)
 4. Check it worked: open `https://your-app.vercel.app/.well-known/assetlinks.json`
-   — it should show your fingerprint, not `[]`
-5. Reinstall the APK. The URL bar is gone.
+   — it should show your fingerprint, not `[]`. An empty list means the values
+   were missing or did not look like a real fingerprint and package name; the
+   route refuses to publish anything malformed.
+5. Confirm Google agrees, which is what Android actually asks:
+
+   ```
+   https://digitalassetlinks.googleapis.com/v1/statements:list?source.web.site=https://your-app.vercel.app&relation=delegate_permission/common.handle_all_urls
+   ```
+
+6. **Uninstall the app, then install the APK again.** Android checks this once,
+   at install time, and caches the answer — redeploying the site does nothing
+   for an app that is already installed. The URL bar is gone.
 
 ### Installing the APK on your phone
 
