@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { PASSWORD_RULES, checkPassword, passwordStrength } from "@/lib/password";
 import { safeNext } from "@/lib/redirect";
@@ -25,6 +25,28 @@ export function AuthForm({ next }: { next?: string }) {
   const destination = safeNext(next);
   const verdict = checkPassword(password, email);
   const strength = passwordStrength(password);
+
+  /*
+   * The confirmation link opens in a new tab and creates the session there.
+   * Cookies are shared across tabs on this origin, so polling here lets the
+   * tab the person is actually looking at move on by itself instead of
+   * stranding them on "check your email" forever.
+   */
+  const landed = useRef(false);
+  useEffect(() => {
+    if (stage !== "verify") return;
+    const supabase = createClient();
+    const timer = setInterval(async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session && !landed.current) {
+        landed.current = true;
+        clearInterval(timer);
+        router.push(destination);
+        router.refresh();
+      }
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [stage, destination, router]);
 
   function land() {
     // A full refresh so the server components pick up the new session cookie.
@@ -60,11 +82,13 @@ export function AuthForm({ next }: { next?: string }) {
         if (signUpError) throw signUpError;
 
         // With email confirmation on, signUp returns no session and Supabase
-        // emails a 6-digit code. With it off, the session is live immediately
-        // and there is nothing to verify.
+        // emails either a link or a code depending on the project's template.
+        // With it off, the session is live immediately and nothing to verify.
         if (!data.session) {
           setStage("verify");
-          setNotice(`We sent a 6-digit code to ${email.trim()}. It expires in an hour.`);
+          setNotice(
+            `We sent a confirmation to ${email.trim()}. Open it and either click the link or type the code below — whichever the email contains. It expires in an hour.`,
+          );
           return;
         }
       } else {
@@ -127,9 +151,9 @@ export function AuthForm({ next }: { next?: string }) {
         email: email.trim(),
       });
       if (resendError) throw resendError;
-      setNotice("A new code is on its way.");
+      setNotice("Sent again — check your inbox and your spam folder.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not send a new code");
+      setError(err instanceof Error ? err.message : "Could not send another email");
     } finally {
       setBusy(false);
     }
@@ -161,17 +185,38 @@ export function AuthForm({ next }: { next?: string }) {
       <form onSubmit={verify} className="flex flex-col gap-3">
         <h2 className="text-lg font-extrabold">Check your email</h2>
         {notice && (
-          <p className="text-sm" style={{ color: "var(--ink-2)" }} role="status">
+          <p className="text-sm leading-relaxed" style={{ color: "var(--ink-2)" }} role="status">
             {notice}
           </p>
         )}
+
+        {/*
+          Two ways in, because which one arrives depends on the Supabase
+          project's email template. The stock template sends a link; a project
+          with custom SMTP can send a six-digit code instead. Rather than pick
+          one and be wrong half the time, both work — and this tab watches for
+          a session so clicking the link anywhere finishes the job here too.
+        */}
+        <div
+          className="flex items-center gap-3 rounded-2xl px-4 py-3"
+          style={{ background: "var(--field)" }}
+        >
+          <span className="pulse-ring size-2 shrink-0 rounded-full" style={{ background: "var(--lime)" }} aria-hidden />
+          <p className="text-xs font-semibold" style={{ color: "var(--ink-2)" }}>
+            Waiting for you to confirm. Click the link in the email and this page
+            carries on by itself.
+          </p>
+        </div>
+
+        <p className="mt-1 text-center text-xs font-semibold" style={{ color: "var(--muted)" }}>
+          Got a 6-digit code instead of a link? Enter it here.
+        </p>
 
         <input
           value={code}
           onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
           inputMode="numeric"
           autoComplete="one-time-code"
-          autoFocus
           placeholder="000000"
           aria-label="6-digit code"
           className="num w-full rounded-2xl py-4 text-center text-3xl tracking-[0.4em] outline-none"
@@ -184,7 +229,11 @@ export function AuthForm({ next }: { next?: string }) {
           </p>
         )}
 
-        <button type="submit" disabled={busy} className="btn-lime w-full py-4 text-sm">
+        <button
+          type="submit"
+          disabled={busy || code.length !== 6}
+          className="btn-lime w-full py-4 text-sm"
+        >
           {busy ? "Checking…" : "Verify and continue"}
         </button>
 
@@ -196,7 +245,7 @@ export function AuthForm({ next }: { next?: string }) {
             className="underline underline-offset-2 disabled:opacity-60"
             style={{ color: "var(--ink-2)" }}
           >
-            Send a new code
+            Send it again
           </button>
           <button
             type="button"

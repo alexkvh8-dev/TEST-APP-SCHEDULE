@@ -31,12 +31,18 @@ Everything below is done in a browser. **No terminal needed.**
    which adds the fields the welcome questions fill in. Also safe to re-run.
 7. Left sidebar → **Authentication** → **Sign In / Providers** → **Email**:
    - Make sure **Enable email provider** is on.
-   - Leave **Confirm email** *on*. Nobody can create an account on an email
+   - Leave **Confirm email** *on*. Nobody can then create an account on an email
      address they do not control, which is what stops someone signing up as you.
    - **Save**.
-8. Left sidebar → **Authentication** → **Emails** → **Confirm signup** template.
-   Replace the body with this so it sends a **code** rather than a link — the
-   app asks for six digits, and a code cannot be clicked by a mail scanner:
+
+   The confirmation email Supabase sends by default contains a **link**. The
+   app handles that: after you sign up it sits on "check your email" and moves
+   on by itself the moment you click the link, even in another tab.
+8. *(Optional, but see the warning below.)* If you want a **6-digit code**
+   instead of a link, Supabase only allows editing email templates once the
+   project has its own SMTP — the template screen is read-only until then. See
+   [Sending real email](#sending-real-email) below. Once SMTP is connected, go
+   to **Authentication → Emails → Confirm signup** and use:
 
    ```html
    <h2>Your FinX code</h2>
@@ -45,7 +51,7 @@ Everything below is done in a browser. **No terminal needed.**
    <p>It expires in an hour. If you did not ask for this, ignore this email.</p>
    ```
 
-   **Save**.
+   The app accepts the code and the link, so this changes nothing else.
 9. Left sidebar → **Project Settings** (gear) → **API Keys**. Keep this tab open —
    you need three values in a moment:
    - **Project URL**
@@ -202,6 +208,37 @@ npm run dev
 
 Open <http://localhost:3000>. You still need the Supabase project from step 1.1,
 but you can skip Vercel entirely while you are trying it out.
+
+---
+
+## Sending real email
+
+Supabase's built-in mailer is for development only. On the free tier it sends
+**about 2 emails an hour, to your own address**, and it is shared infrastructure
+that can be slow or land in spam. That is fine while it is only you. The moment
+a second person tries to sign up, confirmations start silently failing.
+
+It is also why the **Confirm signup** template is read-only in the dashboard:
+Supabase will not let you customise emails it is sending on your behalf.
+
+Connecting your own SMTP fixes both, and there is a free option that needs no
+domain of your own:
+
+1. Make a free account at [brevo.com](https://www.brevo.com) — 300 emails a day,
+   no card, no domain verification required to start.
+2. In Brevo: **Senders, Domains & Dedicated IPs → SMTP & API → SMTP** and copy
+   the server, port, login and master password.
+3. In Supabase: **Project Settings → Authentication → SMTP Settings** →
+   **Enable custom SMTP** and paste them in.
+   - Host `smtp-relay.brevo.com`, port `587`
+   - Sender email: the address you verified in Brevo
+   - Sender name: `FinX`
+4. **Save.** The template screens become editable, and the hourly cap is gone.
+
+[Resend](https://resend.com) (3,000/month) and
+[Mailgun](https://www.mailgun.com) are equally free at this size if you prefer
+one of those; Resend wants a domain you control before it will send to anyone
+but you.
 
 ---
 

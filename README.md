@@ -80,10 +80,17 @@ npm install
    scanning. Also safe to re-run.
 4. **New query** once more → paste `supabase/migration-003-onboarding.sql` →
    **Run**. It adds the country, income and goal the welcome flow collects.
-5. **Authentication → Sign In / Providers → Email** — make sure it is enabled and
-   leave **Confirm email on**. Then under **Authentication → Emails → Confirm
-   signup**, put `{{ .Token }}` in the template so Supabase sends a six-digit
-   code instead of a link; the app's verification step asks for exactly that.
+5. **Authentication → Sign In / Providers → Email** — make sure it is enabled
+   and leave **Confirm email on**, so nobody can register an address they do not
+   control. The default email carries a link; the verification screen waits for
+   it and continues by itself when it is clicked.
+
+   > Supabase's built-in mailer sends roughly **2 emails an hour** and its
+   > templates cannot be edited. For anything beyond testing on your own
+   > address, connect free SMTP (Brevo gives 300/day with no domain needed) —
+   > see [INSTALL.md](INSTALL.md#sending-real-email). With SMTP connected you
+   > can also put `{{ .Token }}` in the Confirm signup template to send a
+   > 6-digit code; the app accepts either.
 6. **Authentication → URL Configuration** → set **Site URL** to your app's URL
    and add `http://localhost:3000/**` plus `https://your-app.vercel.app/**` to
    **Redirect URLs**.
