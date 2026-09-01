@@ -326,7 +326,12 @@ whenever the site redeploys.
 
 1. Go to **[pwabuilder.com](https://www.pwabuilder.com)**
 2. Enter your app's URL → **Start**
-3. **Package for stores** → **Android** → **Generate**
+3. **Package for stores** → pick the **Android** tile → **Generate**
+
+   > Watch which tile you click. Windows gives you `.msix` / `.appxbundle` /
+   > `install.ps1`, which install on a PC and do nothing on a phone. Android is
+   > the one that produces a `.apk`.
+
 4. Download the zip. Inside you get:
    - `app-release-signed.apk` — sideload this straight onto a phone
    - `signing.keystore` + a password — **keep these safe**, you need the same
@@ -357,6 +362,14 @@ confirm the app and the website share an owner. Two environment variables fix it
 Copy the `.apk` across, tap it, and allow **Install unknown apps** for whichever
 app you opened it from. Android will warn you it is from an unknown source —
 that is expected for any app not from the Play Store.
+
+### The Windows package, while you are there
+
+PWABuilder's **Windows** tile produces `.msix` / `.appxbundle` files and an
+`install.ps1`. That is not an Android app, but it is a real Windows one: run
+`install.ps1` (right-click → **Run with PowerShell**, or
+`powershell -ExecutionPolicy Bypass -File .\install.ps1` if Windows blocks it)
+and FinX lands in the Start menu properly rather than as a browser shortcut.
 
 ### Play Store
 
