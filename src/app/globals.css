@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /*
- * Paisa design tokens.
+ * FinX design tokens.
  *
  * Lime is the action colour: the add button, primary buttons, the insight
  * pill, the streak ring. It is never used for data — the moment lime also
@@ -45,6 +45,17 @@
   --good: #3f9e2c;
   --critical: #d0492f;
 
+  /*
+   * The inverted hero surface, used by Safe-to-Spend and the monthly budget.
+   * It is a token pair rather than "--ink as a background plus white text",
+   * because --ink flips to cream in dark mode and white text on cream is
+   * invisible. Both halves move together, so the card cannot go unreadable.
+   */
+  --invert: #16150f;
+  --invert-ink: #f7f5ee;
+  --invert-ink-2: rgba(247, 245, 238, 0.64);
+  --invert-line: rgba(247, 245, 238, 0.16);
+
   --shadow: 0 1px 2px rgba(22, 21, 15, 0.05), 0 8px 22px rgba(22, 21, 15, 0.07);
   --shadow-lg: 0 2px 6px rgba(22, 21, 15, 0.06), 0 18px 44px rgba(22, 21, 15, 0.12);
 }
@@ -72,6 +83,13 @@
     --good: #7bd45f;
     --critical: #e8674a;
 
+    /* Lifts off the ground instead of flipping to cream — a bright card in a
+       dark app is a flashbang, and lime still pops against this. */
+    --invert: #26261f;
+    --invert-ink: #f7f5ee;
+    --invert-ink-2: rgba(247, 245, 238, 0.62);
+    --invert-line: rgba(247, 245, 238, 0.14);
+
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 8px 22px rgba(0, 0, 0, 0.4);
     --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.5), 0 18px 44px rgba(0, 0, 0, 0.5);
   }
@@ -98,6 +116,11 @@
 
   --good: #7bd45f;
   --critical: #e8674a;
+
+  --invert: #26261f;
+  --invert-ink: #f7f5ee;
+  --invert-ink-2: rgba(247, 245, 238, 0.62);
+  --invert-line: rgba(247, 245, 238, 0.14);
 
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 8px 22px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.5), 0 18px 44px rgba(0, 0, 0, 0.5);

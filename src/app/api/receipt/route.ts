@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { parseReceipt } from "@/lib/ai";
 import { getOrCreateProfile } from "@/lib/profile";
+import { LIMITS, rateLimit } from "@/lib/ratelimit";
 import { createClient } from "@/lib/supabase/server";
 
 export const maxDuration = 60;
@@ -22,6 +23,14 @@ export async function POST(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+
+  const quota = rateLimit(user.id, "receipt", LIMITS.receipt);
+  if (!quota.ok) {
+    return NextResponse.json(
+      { error: "That is a lot of receipts in one hour. Try again shortly." },
+      { status: 429, headers: { "Retry-After": String(quota.retryAfter) } },
+    );
+  }
 
   let body: { image?: unknown };
   try {

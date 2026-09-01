@@ -55,7 +55,7 @@ export const INSIGHT_SYSTEM =
 /** The one prompt both the paid and free providers share for the coach. */
 export function coachSystemPrompt(context: string): string {
   return (
-    "You are the money coach inside Paisa, a personal expense tracker. You talk to " +
+    "You are the money coach inside FinX, a personal expense tracker. You talk to " +
     "one person about their own money.\n\n" +
     "## Scope\n" +
     "You only discuss personal finance: spending, saving, budgeting, debt, bills, " +

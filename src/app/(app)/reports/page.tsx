@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { ReportsScreen } from "@/components/ReportsScreen";
 import type { Period } from "@/lib/types";
 
-export const metadata = { title: "Reports — Paisa" };
+export const metadata = { title: "Reports — FinX" };
 
 const PERIODS: Period[] = ["daily", "weekly", "monthly"];
 

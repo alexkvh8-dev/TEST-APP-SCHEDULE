@@ -102,9 +102,9 @@ export function BudgetScreen({ initialMonthLabel }: { initialMonthLabel: string 
           {/* The monthly figure — this is what Safe-to-Spend divides up. */}
           <section
             className="p-5"
-            style={{ background: "var(--ink)", color: "var(--card)", borderRadius: 22 }}
+            style={{ background: "var(--invert)", color: "var(--invert-ink)", borderRadius: 22 }}
           >
-            <p className="label" style={{ color: "rgba(255,255,255,0.55)" }}>
+            <p className="label" style={{ color: "var(--invert-ink-2)" }}>
               Monthly budget
             </p>
             <div className="mt-2 flex items-baseline gap-2">
@@ -121,7 +121,7 @@ export function BudgetScreen({ initialMonthLabel }: { initialMonthLabel: string 
                 style={{ color: "var(--lime)" }}
               />
             </div>
-            <p className="mt-2 text-sm" style={{ color: "rgba(255,255,255,0.7)" }}>
+            <p className="mt-2 text-sm" style={{ color: "var(--invert-ink-2)" }}>
               Spread across the days left in the month, this is your safe-to-spend
               figure on the home screen.
             </p>

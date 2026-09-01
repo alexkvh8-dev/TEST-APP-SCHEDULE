@@ -4,6 +4,7 @@ import { isObviouslyOffTopic, OFF_TOPIC_REPLY, streamCoach } from "@/lib/ai";
 import { formatMoney } from "@/lib/currency";
 import { periodRange } from "@/lib/periods";
 import { getOrCreateProfile } from "@/lib/profile";
+import { LIMITS, rateLimit } from "@/lib/ratelimit";
 import { buildStats } from "@/lib/stats";
 import { createClient } from "@/lib/supabase/server";
 import type { Expense, PeriodStats, Profile } from "@/lib/types";
@@ -100,6 +101,14 @@ export async function POST(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+
+  const quota = rateLimit(user.id, "chat", LIMITS.chat);
+  if (!quota.ok) {
+    return NextResponse.json(
+      { error: "The coach needs a breather. Try again shortly." },
+      { status: 429, headers: { "Retry-After": String(quota.retryAfter) } },
+    );
+  }
 
   let body: { message?: unknown };
   try {

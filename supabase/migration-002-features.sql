@@ -1,5 +1,5 @@
 -- =====================================================================
--- Paisa — migration 002
+-- FinX — migration 002
 -- Adds: reminder interval, category budgets, receipt grouping.
 -- Run this in the Supabase SQL editor AFTER schema.sql. Safe to re-run.
 -- =====================================================================

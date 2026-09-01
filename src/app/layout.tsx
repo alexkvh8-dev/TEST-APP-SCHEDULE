@@ -12,11 +12,11 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Paisa — every rupee, tracked",
+  title: "FinX — every rupee, tracked",
   description:
     "Log every purchase in two taps, see where your money went in graphs, and get an honest daily, weekly and monthly read on it.",
   manifest: "/manifest.webmanifest",
-  appleWebApp: { capable: true, statusBarStyle: "default", title: "Paisa" },
+  appleWebApp: { capable: true, statusBarStyle: "default", title: "FinX" },
   icons: {
     icon: [{ url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
     apple: [{ url: "/icons/icon-192.png" }],

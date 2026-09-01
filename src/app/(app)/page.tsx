@@ -9,11 +9,12 @@ import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-function greetingFor(hour: number): string {
-  if (hour < 5) return "Late night";
-  if (hour < 12) return "Good morning";
-  if (hour < 17) return "Good afternoon";
-  return "Good evening";
+function greetingFor(hour: number, name: string | null): string {
+  const time =
+    hour < 5 ? "Late night" : hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  // First name only — "Good morning, Muhammad Ali Raza" wraps to three lines.
+  const first = name?.trim().split(/\s+/)[0];
+  return first ? `${time}, ${first}` : time;
 }
 
 export default async function TodayPage() {
@@ -35,7 +36,7 @@ export default async function TodayPage() {
 
   return (
     <Suspense>
-      <TodayScreen initial={data} greeting={greetingFor(local.hour)} todayLabel={todayLabel} />
+      <TodayScreen initial={data} greeting={greetingFor(local.hour, profile.full_name)} todayLabel={todayLabel} />
     </Suspense>
   );
 }

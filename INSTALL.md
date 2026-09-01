@@ -1,6 +1,6 @@
-# Getting Paisa onto your phone and desktop
+# Getting FinX onto your phone and desktop
 
-There is no app store download. Paisa is a **PWA** — you put it online once
+There is no app store download. FinX is a **PWA** — you put it online once
 (free), then install it straight from the browser. After that it behaves like a
 normal app: its own icon, no address bar, works offline for the shell.
 
@@ -26,12 +26,27 @@ Everything below is done in a browser. **No terminal needed.**
    [`supabase/migration-002-features.sql`](supabase/migration-002-features.sql).
    This adds the reminder spacing setting, category budgets, and the columns
    behind voice logging and receipt scanning. It is safe to run more than once.
-6. Left sidebar → **Authentication** → **Sign In / Providers** → **Email**:
+6. **New query** once more for
+   [`supabase/migration-003-onboarding.sql`](supabase/migration-003-onboarding.sql),
+   which adds the fields the welcome questions fill in. Also safe to re-run.
+7. Left sidebar → **Authentication** → **Sign In / Providers** → **Email**:
    - Make sure **Enable email provider** is on.
-   - Turn **Confirm email** *off*. This makes signup instant and means you never
-     have to set up an email server.
+   - Leave **Confirm email** *on*. Nobody can create an account on an email
+     address they do not control, which is what stops someone signing up as you.
    - **Save**.
-7. Left sidebar → **Project Settings** (gear) → **API Keys**. Keep this tab open —
+8. Left sidebar → **Authentication** → **Emails** → **Confirm signup** template.
+   Replace the body with this so it sends a **code** rather than a link — the
+   app asks for six digits, and a code cannot be clicked by a mail scanner:
+
+   ```html
+   <h2>Your FinX code</h2>
+   <p>Enter this code to finish creating your account:</p>
+   <p style="font-size:28px;letter-spacing:6px;"><strong>{{ .Token }}</strong></p>
+   <p>It expires in an hour. If you did not ask for this, ignore this email.</p>
+   ```
+
+   **Save**.
+9. Left sidebar → **Project Settings** (gear) → **API Keys**. Keep this tab open —
    you need three values in a moment:
    - **Project URL**
    - **anon / public** key

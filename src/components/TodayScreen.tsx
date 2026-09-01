@@ -109,32 +109,11 @@ export function TodayScreen({
 
   return (
     <div className="flex flex-col gap-3.5 pb-4">
-      <header className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-xs font-semibold" style={{ color: "var(--muted)" }}>
-            {todayLabel}
-          </p>
-          <h1 className="mt-0.5 text-2xl font-extrabold tracking-tight">{greeting}</h1>
-        </div>
-        <Link
-          href="/settings"
-          aria-label="Settings"
-          className="flex size-10 shrink-0 items-center justify-center rounded-full"
-          style={{ background: "var(--card)", color: "var(--ink)", boxShadow: "var(--shadow)" }}
-        >
-          <svg
-            width="19"
-            height="19"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.7"
-            strokeLinecap="round"
-            aria-hidden
-          >
-            <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3 12h2m14 0h2M12 3v2m0 14v2M5.6 5.6l1.4 1.4m10 10 1.4 1.4m0-12.8-1.4 1.4m-10 10-1.4 1.4" />
-          </svg>
-        </Link>
+      <header>
+        <p className="text-xs font-semibold" style={{ color: "var(--muted)" }}>
+          {todayLabel}
+        </p>
+        <h1 className="mt-0.5 text-2xl font-extrabold tracking-tight">{greeting}</h1>
       </header>
 
       {data.insight && (

@@ -1,4 +1,4 @@
-/* Paisa service worker — installability, push, and notification clicks. */
+/* FinX service worker — installability, push, and notification clicks. */
 
 const SHELL_CACHE = "paisa-shell-v1";
 const SHELL_ASSETS = ["/manifest.webmanifest", "/icons/icon-192.png"];
@@ -43,7 +43,7 @@ self.addEventListener("fetch", (event) => {
 
 self.addEventListener("push", (event) => {
   let payload = {
-    title: "Paisa",
+    title: "FinX",
     body: "Open the app to log your spending.",
     url: "/",
     tag: "paisa",

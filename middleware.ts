@@ -1,6 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+import { safeNext } from "@/lib/redirect";
+
 const PUBLIC_PATHS = ["/login", "/auth"];
 
 export async function middleware(request: NextRequest) {
@@ -36,7 +38,7 @@ export async function middleware(request: NextRequest) {
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
-    url.searchParams.set("next", pathname);
+    url.searchParams.set("next", safeNext(pathname));
     return NextResponse.redirect(url);
   }
 

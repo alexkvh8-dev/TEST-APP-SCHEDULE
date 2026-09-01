@@ -1,4 +1,4 @@
-# Paisa
+# FinX
 
 A personal expense tracker built as an installable PWA. Log every purchase in two
 taps, see where the money went in graphs, and get an honest daily, weekly and
@@ -78,15 +78,16 @@ npm install
    **Run**. It adds the reminder spacing setting, the `category_budgets` table,
    and the `group_id`/`source` columns behind voice logging and receipt
    scanning. Also safe to re-run.
-4. **Authentication → Sign In / Providers → Email** — make sure it is enabled,
-   then **turn off "Confirm email"**. That makes signup instant and means you
-   never need to configure an email server. (Leave it on if you would rather
-   verify addresses — Supabase's built-in mailer sends a few messages an hour on
-   the free tier, which is fine for one person.)
-5. **Authentication → URL Configuration** → set **Site URL** to your app's URL
+4. **New query** once more → paste `supabase/migration-003-onboarding.sql` →
+   **Run**. It adds the country, income and goal the welcome flow collects.
+5. **Authentication → Sign In / Providers → Email** — make sure it is enabled and
+   leave **Confirm email on**. Then under **Authentication → Emails → Confirm
+   signup**, put `{{ .Token }}` in the template so Supabase sends a six-digit
+   code instead of a link; the app's verification step asks for exactly that.
+6. **Authentication → URL Configuration** → set **Site URL** to your app's URL
    and add `http://localhost:3000/**` plus `https://your-app.vercel.app/**` to
    **Redirect URLs**.
-6. Copy the project URL and both API keys from **Project Settings → API Keys**.
+7. Copy the project URL and both API keys from **Project Settings → API Keys**.
 
 > There is no Google Cloud console step and no OAuth client to create. You sign
 > up with an email and a password, and that account is what syncs your data
@@ -98,7 +99,7 @@ Go to [aistudio.google.com/apikey](https://aistudio.google.com/apikey), sign in
 with any Google account, and click **Create API key**. No billing setup, no card.
 Paste it into `GEMINI_API_KEY`.
 
-The free tier allows roughly 10 requests a minute. Paisa uses one request per
+The free tier allows roughly 10 requests a minute. FinX uses one request per
 expense you log, one per report, and one per coach message — comfortably inside
 that for personal use. If you do hit the limit, the app quietly falls back to the
 built-in rules instead of failing.
@@ -215,6 +216,8 @@ src/
 supabase/schema.sql   Tables, RLS policies, signup trigger
 supabase/migration-002-features.sql
                       Reminder spacing, category budgets, voice/receipt columns
+supabase/migration-003-onboarding.sql
+                      Country, income, goal, onboarded_at
 .github/workflows/    Free scheduler for the cron jobs
 ```
 

@@ -1,5 +1,5 @@
 -- =====================================================================
--- Paisa — schema
+-- FinX — schema
 -- Run this in the Supabase SQL editor (Dashboard > SQL Editor > New query).
 -- Safe to re-run.
 -- =====================================================================

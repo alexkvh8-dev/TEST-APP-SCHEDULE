@@ -49,17 +49,17 @@ export function SafeToSpendCard({
     <section
       className="p-5"
       style={{
-        background: "var(--ink)",
-        color: "var(--card)",
+        background: "var(--invert)",
+        color: "var(--invert-ink)",
         borderRadius: 22,
         boxShadow: "var(--shadow)",
       }}
     >
       <div className="flex items-baseline justify-between gap-3">
-        <p className="label" style={{ color: "rgba(255,255,255,0.55)" }}>
+        <p className="label" style={{ color: "var(--invert-ink-2)" }}>
           {over ? "Over today's pace" : "Safe to spend today"}
         </p>
-        <span className="tabular text-xs font-semibold" style={{ color: "rgba(255,255,255,0.55)" }}>
+        <span className="tabular text-xs font-semibold" style={{ color: "var(--invert-ink-2)" }}>
           {safe.daysLeft} {safe.daysLeft === 1 ? "day" : "days"} left
         </span>
       </div>
@@ -71,7 +71,7 @@ export function SafeToSpendCard({
       {/* How much of today's allowance is gone, before the number changes. */}
       <div
         className="mt-4 h-2 w-full overflow-hidden rounded-full"
-        style={{ background: "rgba(255,255,255,0.14)" }}
+        style={{ background: "var(--invert-line)" }}
         role="img"
         aria-label={`${Math.round(used * 100)} percent of today's allowance used`}
       >
@@ -84,7 +84,7 @@ export function SafeToSpendCard({
         />
       </div>
 
-      <p className="mt-3 text-sm leading-snug" style={{ color: "rgba(255,255,255,0.7)" }}>
+      <p className="mt-3 text-sm leading-snug" style={{ color: "var(--invert-ink-2)" }}>
         {over
           ? `${formatMoney(spentToday, currency)} spent against a ${formatMoney(safe.amount, currency)} pace. Tomorrow's number drops to keep the month whole.`
           : `${formatMoney(spentToday, currency)} spent today · ${formatMoney(safe.remainingThisMonth, currency)} left this month.`}

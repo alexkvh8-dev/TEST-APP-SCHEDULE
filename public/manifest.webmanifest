@@ -1,17 +1,30 @@
 {
-  "name": "Paisa — expense tracker",
-  "short_name": "Paisa",
+  "name": "FinX \u2014 expense tracker",
+  "short_name": "FinX",
   "description": "Track every rupee you spend and see where it went, in graphs.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f9f9f7",
-  "theme_color": "#2a78d6",
-  "categories": ["finance", "productivity"],
+  "background_color": "#efece6",
+  "theme_color": "#efece6",
+  "categories": [
+    "finance",
+    "productivity"
+  ],
   "icons": [
-    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
     {
       "src": "/icons/icon-maskable-512.png",
       "sizes": "512x512",
@@ -24,13 +37,23 @@
       "name": "Add a spend",
       "short_name": "Add",
       "url": "/?add=1",
-      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
     },
     {
-      "name": "Reports",
-      "short_name": "Reports",
+      "name": "Analyze",
+      "short_name": "Analyze",
       "url": "/reports",
-      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
     }
   ]
 }

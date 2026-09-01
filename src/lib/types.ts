@@ -2,6 +2,9 @@ export type NeedLevel = "need" | "want" | "unclear";
 export type Period = "daily" | "weekly" | "monthly";
 export type ExpenseSource = "manual" | "voice" | "receipt" | "repeat";
 
+/** What the person said they are here to do. Shapes copy, never gates anything. */
+export type PrimaryGoal = "save" | "debt" | "awareness" | "budget";
+
 export interface Profile {
   id: string;
   email: string | null;
@@ -10,6 +13,12 @@ export interface Profile {
   base_currency: string;
   timezone: string;
   monthly_budget: number | null;
+  /** ISO 3166-1 alpha-2, picked during onboarding. */
+  country: string | null;
+  monthly_income: number | null;
+  primary_goal: PrimaryGoal | null;
+  /** Null until the welcome flow is finished. */
+  onboarded_at: string | null;
   reminders_enabled: boolean;
   reminder_start_hour: number;
   reminder_end_hour: number;
