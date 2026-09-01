@@ -41,7 +41,8 @@ Everything below is done in a browser. **No terminal needed.**
 8. **Skip the email templates.** Supabase keeps them read-only until the
    project has its own SMTP, and you do not need to touch them — the default
    link works. Only if other people will sign up do you need
-   [Sending real email](#sending-real-email) below.
+   [Sending real email to other people](#sending-real-email-to-other-people)
+   below — which you do need before you share the app with anyone.
 9. Left sidebar → **Project Settings** (gear) → **API Keys**. Keep this tab open —
    you need three values in a moment:
    - **Project URL**
@@ -201,64 +202,83 @@ but you can skip Vercel entirely while you are trying it out.
 
 ---
 
-## Sending real email
+## Sending real email to other people
 
-**You probably do not need this yet.** Supabase's built-in mailer sends about
-**2 emails an hour, to your own address**, which is enough for you to sign in on
-your phone and your laptop. Nothing here matters until a *second person* tries
-to create an account — at that point their confirmation email silently never
-arrives, and they have no way to get in.
+Supabase's built-in mailer is **for development only**. It sends roughly 2
+messages an hour, only to your own address, from shared infrastructure. If you
+open the app to other people without replacing it, their confirmation emails
+will simply never arrive and they will have no way in.
 
-Connecting your own SMTP lifts that cap and also unlocks the email templates,
-which Supabase keeps read-only until a project has its own mail server.
+Do not use a Gmail App Password for this either. It works for you alone, but
+Google throttles it, sending app mail through a personal account is outside
+what that access is meant for, and every message would arrive from your own
+address.
 
-### The free option you already own: Gmail
+### You need a domain. Here is why it is not optional.
 
-No new service, no plan page, no domain, no card. Google allows 500 messages a
-day this way, which is far more than this app will ever send.
+Since February 2024 **Gmail and Yahoo reject or spam-folder bulk mail that is
+not authenticated with SPF and DKIM.** Those are DNS records, and DNS records
+need a domain you control. Send from an unauthenticated address and your
+signup emails land in spam for most of your users — which looks exactly like
+"the app is broken".
 
-1. Your Google account needs **2-Step Verification** on — App Passwords do not
-   exist without it. [myaccount.google.com/security](https://myaccount.google.com/security)
-   → **2-Step Verification** → turn on if it is off.
-2. Go to [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords).
-   Type a name — `FinX` — and **Create**.
-3. Google shows a **16-character password**. Copy it. Remove the spaces. You
-   cannot see it again after closing the box, but you can always delete it and
-   make another.
-4. In Supabase: **Project Settings → Authentication → SMTP Settings** →
-   **Enable custom SMTP**:
+A domain is the only part of this that costs money:
+
+- **Cloudflare Registrar** sells at wholesale — a `.com` is around $10/year with
+  no markup and no first-year-cheap-then-expensive trick.
+- **Porkbun** or **Namecheap** often have `.xyz` or `.site` for **$1–3 for the
+  first year**.
+
+That is the whole bill. Every service below is free at this size.
+
+### The setup: Resend + your domain
+
+Resend is built for exactly this — transactional mail from an app — and gives
+**3,000 emails a month, 100 a day, free forever**. At one confirmation per
+signup that is a lot of users.
+
+1. Buy a domain (above). Point its nameservers at Cloudflare if it is not
+   already there — free, and it makes step 3 a two-minute job.
+2. Sign up at [resend.com](https://resend.com). No card.
+3. **Domains → Add Domain** → type your domain. Resend shows three DNS records
+   (one MX-style for the sending subdomain, one DKIM `TXT`, one SPF `TXT`).
+   Add them in Cloudflare under **DNS → Records**, exactly as shown, and set
+   each to **DNS only** (grey cloud, not orange).
+4. Wait for Resend to show **Verified** — usually minutes.
+5. **API Keys → Create API Key.** Copy it.
+6. In Supabase: **Project Settings → Authentication → SMTP Settings** →
+   **Enable Custom SMTP**:
 
    | Field | Value |
    |---|---|
-   | Host | `smtp.gmail.com` |
+   | Host | `smtp.resend.com` |
    | Port | `587` |
-   | Username | your full Gmail address |
-   | Password | the 16-character App Password, no spaces |
-   | Sender email | the same Gmail address |
+   | Username | `resend` |
+   | Password | your Resend API key |
+   | Sender email | `noreply@yourdomain.com` |
    | Sender name | `FinX` |
 
-5. **Save**, then sign up with a throwaway address to check it arrives.
+7. **Save.** Sign up with an address you do not own — a friend's, or a
+   throwaway — and confirm it arrives in the inbox rather than spam.
 
-Emails will show as coming from your Gmail address. That is the trade — it is
-your personal address, so share the app accordingly. Revoke it any time by
-deleting the App Password in Google; nothing else breaks.
+### Alternatives, all free at this size
 
-### Other free options
+| Service | Free allowance | SMTP host | Notes |
+|---|---|---|---|
+| **Resend** | 3,000/mo · 100/day | `smtp.resend.com` | Recommended. Domain required to send to anyone but yourself. |
+| **Brevo** | 300/day (~9,000/mo) | `smtp-relay.brevo.com` | Highest allowance. Sign up on the free plan and ignore the upgrade page it pushes you toward. |
+| **Mailjet** | 200/day · 6,000/mo | `in-v3.mailjet.com` | Straightforward, generous. |
+| **SMTP2GO** | 1,000/mo | `mail.smtp2go.com` | Smallest, simplest. |
+| **Amazon SES** | not free, but ~$0.10 per 1,000 | `email-smtp.<region>.amazonaws.com` | Cheapest at scale. Needs an AWS account and a "production access" request. |
 
-| Service | Free allowance | Catch |
-|---|---|---|
-| **Brevo** | 300/day | Sign up on the *free* plan and ignore the upgrade page it pushes you to — you do not need to pick a paid plan to get SMTP credentials |
-| **Mailjet** | 200/day, 6,000/month | Verify a sender address by email |
-| **Resend** | 100/day, 3,000/month | Will only send to your own address until you verify a domain you own |
-| **SMTP2GO** | 1,000/month | Fewest emails, simplest setup |
+Whichever you pick, **authenticate the domain with SPF and DKIM in its
+dashboard.** Skipping that is the single most common reason signup emails go
+missing.
 
-All four are configured in exactly the same place in Supabase — only the host,
-port and credentials differ.
+### After SMTP is connected
 
-### Once SMTP is connected
-
-The **Authentication → Emails** templates become editable. If you want signup to
-send a **6-digit code** instead of a link, open **Confirm signup** and use:
+The **Authentication → Emails** templates unlock. If you want signup to send a
+**6-digit code** rather than a link, open **Confirm signup** and use:
 
 ```html
 <h2>Your FinX code</h2>
@@ -267,8 +287,11 @@ send a **6-digit code** instead of a link, open **Confirm signup** and use:
 <p>It expires in an hour. If you did not ask for this, ignore this email.</p>
 ```
 
-The app accepts the code and the link, so this is a preference, not a
-requirement.
+The app accepts both, so this is a preference rather than a requirement.
+
+Also raise the limits under **Authentication → Rate Limits** — Supabase caps
+confirmation emails per hour independently of your SMTP provider, and the
+default is tuned for the built-in mailer.
 
 ---
 

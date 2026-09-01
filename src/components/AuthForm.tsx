@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
+import { translateAuthError } from "@/lib/authErrors";
 import { PASSWORD_RULES, checkPassword, passwordStrength } from "@/lib/password";
 import { safeNext } from "@/lib/redirect";
 import { createClient } from "@/lib/supabase/client";
@@ -101,12 +102,16 @@ export function AuthForm({ next }: { next?: string }) {
 
       land();
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Something went wrong";
-      setError(
-        message === "Invalid login credentials"
-          ? "That email and password do not match an account."
-          : message,
-      );
+      const { kind, message } = translateAuthError(err);
+      // Signing in before confirming is not a failure, it is an unfinished
+      // signup — so put them on the step that finishes it.
+      if (kind === "unconfirmed") {
+        setStage("verify");
+        setNotice(`Your account exists but ${email.trim()} is not confirmed yet.`);
+        return;
+      }
+      if (kind === "already-registered") setMode("signin");
+      setError(message);
     } finally {
       setBusy(false);
     }
@@ -130,12 +135,7 @@ export function AuthForm({ next }: { next?: string }) {
       if (otpError) throw otpError;
       land();
     } catch (err) {
-      const message = err instanceof Error ? err.message : "That code did not work";
-      setError(
-        /expired|invalid/i.test(message)
-          ? "That code is wrong or has expired. Send a new one."
-          : message,
-      );
+      setError(translateAuthError(err).message);
     } finally {
       setBusy(false);
     }
@@ -153,7 +153,7 @@ export function AuthForm({ next }: { next?: string }) {
       if (resendError) throw resendError;
       setNotice("Sent again — check your inbox and your spam folder.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not send another email");
+      setError(translateAuthError(err).message);
     } finally {
       setBusy(false);
     }
@@ -173,7 +173,9 @@ export function AuthForm({ next }: { next?: string }) {
     });
 
     setBusy(false);
-    if (resetError) setError(resetError.message);
+    // Always the same sentence, whether or not the address exists — otherwise
+    // this form becomes a way to test which emails have accounts here.
+    if (resetError) setError(translateAuthError(resetError).message);
     else setNotice("If that email has an account, a reset link is on its way.");
   }
 

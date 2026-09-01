@@ -85,12 +85,12 @@ npm install
    control. The default email carries a link; the verification screen waits for
    it and continues by itself when it is clicked.
 
-   > Supabase's built-in mailer sends roughly **2 emails an hour** and its
-   > templates cannot be edited. That is fine for your own devices. Before
-   > anyone else signs up, connect free SMTP — a Gmail App Password works and
-   > costs nothing, see [INSTALL.md](INSTALL.md#sending-real-email). With SMTP
-   > connected you can also put `{{ .Token }}` in the Confirm signup template to
-   > send a 6-digit code; the app accepts either.
+   > Supabase's built-in mailer is development-only: roughly **2 emails an
+   > hour**, to your own address. Fine for your devices, useless the moment
+   > someone else signs up. Before you share the app, connect real SMTP —
+   > Resend is free for 3,000/month and needs a domain so Gmail and Yahoo will
+   > accept the mail. See
+   > [INSTALL.md](INSTALL.md#sending-real-email-to-other-people).
 6. **Authentication → URL Configuration** → set **Site URL** to your app's URL
    and add `http://localhost:3000/**` plus `https://your-app.vercel.app/**` to
    **Redirect URLs**.
