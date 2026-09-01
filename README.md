@@ -86,11 +86,11 @@ npm install
    it and continues by itself when it is clicked.
 
    > Supabase's built-in mailer sends roughly **2 emails an hour** and its
-   > templates cannot be edited. For anything beyond testing on your own
-   > address, connect free SMTP (Brevo gives 300/day with no domain needed) —
-   > see [INSTALL.md](INSTALL.md#sending-real-email). With SMTP connected you
-   > can also put `{{ .Token }}` in the Confirm signup template to send a
-   > 6-digit code; the app accepts either.
+   > templates cannot be edited. That is fine for your own devices. Before
+   > anyone else signs up, connect free SMTP — a Gmail App Password works and
+   > costs nothing, see [INSTALL.md](INSTALL.md#sending-real-email). With SMTP
+   > connected you can also put `{{ .Token }}` in the Confirm signup template to
+   > send a 6-digit code; the app accepts either.
 6. **Authentication → URL Configuration** → set **Site URL** to your app's URL
    and add `http://localhost:3000/**` plus `https://your-app.vercel.app/**` to
    **Redirect URLs**.

@@ -38,20 +38,10 @@ Everything below is done in a browser. **No terminal needed.**
    The confirmation email Supabase sends by default contains a **link**. The
    app handles that: after you sign up it sits on "check your email" and moves
    on by itself the moment you click the link, even in another tab.
-8. *(Optional, but see the warning below.)* If you want a **6-digit code**
-   instead of a link, Supabase only allows editing email templates once the
-   project has its own SMTP — the template screen is read-only until then. See
-   [Sending real email](#sending-real-email) below. Once SMTP is connected, go
-   to **Authentication → Emails → Confirm signup** and use:
-
-   ```html
-   <h2>Your FinX code</h2>
-   <p>Enter this code to finish creating your account:</p>
-   <p style="font-size:28px;letter-spacing:6px;"><strong>{{ .Token }}</strong></p>
-   <p>It expires in an hour. If you did not ask for this, ignore this email.</p>
-   ```
-
-   The app accepts the code and the link, so this changes nothing else.
+8. **Skip the email templates.** Supabase keeps them read-only until the
+   project has its own SMTP, and you do not need to touch them — the default
+   link works. Only if other people will sign up do you need
+   [Sending real email](#sending-real-email) below.
 9. Left sidebar → **Project Settings** (gear) → **API Keys**. Keep this tab open —
    you need three values in a moment:
    - **Project URL**
@@ -213,32 +203,72 @@ but you can skip Vercel entirely while you are trying it out.
 
 ## Sending real email
 
-Supabase's built-in mailer is for development only. On the free tier it sends
-**about 2 emails an hour, to your own address**, and it is shared infrastructure
-that can be slow or land in spam. That is fine while it is only you. The moment
-a second person tries to sign up, confirmations start silently failing.
+**You probably do not need this yet.** Supabase's built-in mailer sends about
+**2 emails an hour, to your own address**, which is enough for you to sign in on
+your phone and your laptop. Nothing here matters until a *second person* tries
+to create an account — at that point their confirmation email silently never
+arrives, and they have no way to get in.
 
-It is also why the **Confirm signup** template is read-only in the dashboard:
-Supabase will not let you customise emails it is sending on your behalf.
+Connecting your own SMTP lifts that cap and also unlocks the email templates,
+which Supabase keeps read-only until a project has its own mail server.
 
-Connecting your own SMTP fixes both, and there is a free option that needs no
-domain of your own:
+### The free option you already own: Gmail
 
-1. Make a free account at [brevo.com](https://www.brevo.com) — 300 emails a day,
-   no card, no domain verification required to start.
-2. In Brevo: **Senders, Domains & Dedicated IPs → SMTP & API → SMTP** and copy
-   the server, port, login and master password.
-3. In Supabase: **Project Settings → Authentication → SMTP Settings** →
-   **Enable custom SMTP** and paste them in.
-   - Host `smtp-relay.brevo.com`, port `587`
-   - Sender email: the address you verified in Brevo
-   - Sender name: `FinX`
-4. **Save.** The template screens become editable, and the hourly cap is gone.
+No new service, no plan page, no domain, no card. Google allows 500 messages a
+day this way, which is far more than this app will ever send.
 
-[Resend](https://resend.com) (3,000/month) and
-[Mailgun](https://www.mailgun.com) are equally free at this size if you prefer
-one of those; Resend wants a domain you control before it will send to anyone
-but you.
+1. Your Google account needs **2-Step Verification** on — App Passwords do not
+   exist without it. [myaccount.google.com/security](https://myaccount.google.com/security)
+   → **2-Step Verification** → turn on if it is off.
+2. Go to [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords).
+   Type a name — `FinX` — and **Create**.
+3. Google shows a **16-character password**. Copy it. Remove the spaces. You
+   cannot see it again after closing the box, but you can always delete it and
+   make another.
+4. In Supabase: **Project Settings → Authentication → SMTP Settings** →
+   **Enable custom SMTP**:
+
+   | Field | Value |
+   |---|---|
+   | Host | `smtp.gmail.com` |
+   | Port | `587` |
+   | Username | your full Gmail address |
+   | Password | the 16-character App Password, no spaces |
+   | Sender email | the same Gmail address |
+   | Sender name | `FinX` |
+
+5. **Save**, then sign up with a throwaway address to check it arrives.
+
+Emails will show as coming from your Gmail address. That is the trade — it is
+your personal address, so share the app accordingly. Revoke it any time by
+deleting the App Password in Google; nothing else breaks.
+
+### Other free options
+
+| Service | Free allowance | Catch |
+|---|---|---|
+| **Brevo** | 300/day | Sign up on the *free* plan and ignore the upgrade page it pushes you to — you do not need to pick a paid plan to get SMTP credentials |
+| **Mailjet** | 200/day, 6,000/month | Verify a sender address by email |
+| **Resend** | 100/day, 3,000/month | Will only send to your own address until you verify a domain you own |
+| **SMTP2GO** | 1,000/month | Fewest emails, simplest setup |
+
+All four are configured in exactly the same place in Supabase — only the host,
+port and credentials differ.
+
+### Once SMTP is connected
+
+The **Authentication → Emails** templates become editable. If you want signup to
+send a **6-digit code** instead of a link, open **Confirm signup** and use:
+
+```html
+<h2>Your FinX code</h2>
+<p>Enter this code to finish creating your account:</p>
+<p style="font-size:28px;letter-spacing:6px;"><strong>{{ .Token }}</strong></p>
+<p>It expires in an hour. If you did not ask for this, ignore this email.</p>
+```
+
+The app accepts the code and the link, so this is a preference, not a
+requirement.
 
 ---
 
