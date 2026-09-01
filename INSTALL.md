@@ -336,13 +336,35 @@ whenever the site redeploys.
 
 1. Go to **[pwabuilder.com](https://www.pwabuilder.com)**
 2. Enter your app's URL → **Start**
-3. **Package for stores** → pick the **Android** tile → **Generate**
+3. **Package for stores** → pick the **Android** tile
 
    > Watch which tile you click. Windows gives you `.msix` / `.appxbundle` /
    > `install.ps1`, which install on a PC and do nothing on a phone. Android is
    > the one that produces a `.apk`.
 
-4. Download the zip. Inside you get:
+4. Open the **advanced settings** panel before generating and set
+   **Fallback behavior** to **`webview`**, not the default `customtabs`.
+
+   This is the single most useful setting on the page. A TWA is rendered by
+   Chrome, and only Chrome. When it cannot be — Chrome is not the default
+   browser, or the device ships Mi Browser or Samsung Internet — the app falls
+   back, and the two fallbacks are very different:
+
+   | Setting | What you get when TWA cannot run |
+   |---|---|
+   | `customtabs` *(default)* | A Chrome Custom Tab, **with the white address bar across the top** |
+   | `webview` | A plain WebView — **no address bar, ever**, on any device |
+
+   Leave the asset links configured either way: with both in place the app uses
+   real TWA where it can and only drops to the WebView where it cannot.
+
+   The trade on the WebView path is push notifications: a WebView has no
+   service worker, so reminders will not fire there. Voice and camera still
+   work once Android grants the permissions.
+
+5. **Generate**.
+
+6. Download the zip. Inside you get:
    - `app-release-signed.apk` — sideload this straight onto a phone
    - `signing.keystore` + a password — **keep these safe**, you need the same
      key to ship any future update
@@ -392,17 +414,29 @@ that is expected for any app not from the Play Store.
 
 ### If the APK keeps showing the URL bar
 
-A TWA is rendered by Chrome, and **only Chrome**. If the phone's default browser
-is something else — Mi Browser, Samsung Internet — the APK opens through that
-instead, and those have no TWA support, so the address bar is always there no
-matter how correct your asset links are. Common on Xiaomi and Samsung devices.
+Work through these in order — the first two are the usual answer:
 
-Check **Settings → Apps → Default apps → Browser** and set it to Chrome.
+1. **Was the package built with `fallbackType: webview`?** If it was left at
+   `customtabs`, the bar is guaranteed on any device that cannot run a TWA, and
+   no amount of correct asset links will remove it. Rebuild with the setting
+   changed. This is by far the most common cause.
 
-If you would rather not depend on that, use Chrome's **Install** (above)
-instead. A WebAPK needs no verification at all and cannot show a URL bar, which
-makes the whole class of problem go away. The `.apk` is worth the trouble only
-when you need a file to hand around or to upload to the Play Store.
+2. **Is Chrome the default browser?** **Settings → Apps → Default apps →
+   Browser.** A TWA only runs under Chrome. Xiaomi and Samsung devices often
+   default to their own browser, which has no TWA support.
+
+3. **Did you reinstall after fixing the asset links?** Android checks them once,
+   at install time, and caches the answer. A redeploy changes nothing for an app
+   that is already installed — uninstall it and install again.
+
+4. **Do the APK and the fingerprint come from the same download?** PWABuilder
+   generates a fresh signing key every time you download a package, so an APK
+   from one download will never verify against an `assetlinks.json` from
+   another.
+
+5. **Are you opening it from the app icon?** Tapping a link in WhatsApp or a
+   notification opens a Custom Tab, which looks identical and has nothing to do
+   with your app.
 
 ### The Windows package, while you are there
 
