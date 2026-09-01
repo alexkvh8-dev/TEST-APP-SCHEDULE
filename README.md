@@ -10,6 +10,9 @@ needs a credit card.
 > **Just want it on your phone?** [**INSTALL.md**](INSTALL.md) is a click-by-click
 > walkthrough — deploy it free, then install it on Android, iPhone and desktop.
 > No terminal required.
+>
+> **Worried about your users' data?** [**SECURITY.md**](SECURITY.md) lists what
+> protects it and how to verify each claim yourself.
 
 - **Email + password sign-in** — your data lives in the cloud against your email.
   Sign in on a phone, a laptop, anything, and everything is there.
@@ -80,10 +83,11 @@ npm install
    scanning. Also safe to re-run.
 4. **New query** once more → paste `supabase/migration-003-onboarding.sql` →
    **Run**. It adds the country, income and goal the welcome flow collects.
-5. **Authentication → Sign In / Providers → Email** — make sure it is enabled
-   and leave **Confirm email on**, so nobody can register an address they do not
-   control. The default email carries a link; the verification screen waits for
-   it and continues by itself when it is clicked.
+5. **Authentication → Sign In / Providers → Email** — make sure it is enabled.
+   Leave **Confirm email off** until you have real email sending configured;
+   the built-in mailer sends about two messages an hour, so other people's
+   confirmations would silently fail. Account security does not depend on it —
+   see [SECURITY.md](SECURITY.md).
 
    > Supabase's built-in mailer is development-only: roughly **2 emails an
    > hour**, to your own address. Fine for your devices, useless the moment

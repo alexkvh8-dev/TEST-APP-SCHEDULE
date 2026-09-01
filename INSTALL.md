@@ -31,8 +31,11 @@ Everything below is done in a browser. **No terminal needed.**
    which adds the fields the welcome questions fill in. Also safe to re-run.
 7. Left sidebar → **Authentication** → **Sign In / Providers** → **Email**:
    - Make sure **Enable email provider** is on.
-   - Leave **Confirm email** *on*. Nobody can then create an account on an email
-     address they do not control, which is what stops someone signing up as you.
+   - **Confirm email**: leave it *off* until you have real email sending set up
+     (see below). With the built-in mailer capped at about two messages an hour,
+     leaving it on means other people's signups silently fail. Turning it off
+     weakens nothing else — see [SECURITY.md](SECURITY.md) for what actually
+     protects accounts, none of which involves email.
    - **Save**.
 
    The confirmation email Supabase sends by default contains a **link**. The
