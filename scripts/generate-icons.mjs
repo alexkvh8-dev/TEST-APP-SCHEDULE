@@ -104,38 +104,88 @@ function pointInTriangle(px, py, [ax, ay], [bx, by], [cx, cy]) {
  * exactly and no seam shows through to the plate behind. Order matters: later
  * triangles paint over earlier ones.
  */
+/**
+ * Builds one leaf as a fan of triangles from an interior point out to an
+ * outline. Neighbouring facets share an edge exactly, so no seam shows through
+ * to the plate behind, and each gets its own shade to make the fold.
+ */
+function fan(centre, outline, shades) {
+  return outline.map((point, i) => ({
+    p: [centre, point, outline[(i + 1) % outline.length]],
+    c: shades[i % shades.length],
+  }));
+}
+
 function markTriangles() {
-  const green = [
-    // Lower blade, from the base up the spine.
-    { p: [[38, 90], [30, 66], [46, 62]], c: GREEN_DARK },
-    { p: [[38, 90], [46, 62], [52, 88]], c: GREEN_MID },
-    { p: [[30, 66], [40, 40], [46, 62]], c: GREEN_MID },
-    { p: [[40, 40], [52, 56], [46, 62]], c: GREEN_LIGHT },
-    { p: [[40, 40], [50, 30], [52, 56]], c: GREEN_MID },
-    { p: [[46, 62], [52, 56], [52, 88]], c: GREEN_DARK },
-    // The two stepped fins on the outer edge.
-    { p: [[30, 66], [17, 74], [31, 78]], c: GREEN_MID },
-    { p: [[30, 66], [31, 78], [38, 90]], c: GREEN_DEEP },
-    { p: [[26, 80], [12, 88], [27, 90]], c: GREEN_DARK },
-    { p: [[26, 80], [27, 90], [34, 92]], c: GREEN_DEEP },
+  /*
+   * The green leaf: a blade rising to a point, with two stepped tabs cut off
+   * its lower-left edge. Bright at the tip, deep at the base.
+   */
+  const greenOutline = [
+    [41, 25],
+    [50, 42],
+    [52, 60],
+    [47, 78],
+    [38, 91],
+    [30, 74],
+    [26, 50],
+    [33, 35],
+  ];
+  const greenCentre = [40, 56];
+  const green = fan(greenCentre, greenOutline, [
+    GREEN_LIGHT,
+    GREEN_MID,
+    GREEN_DARK,
+    GREEN_DEEP,
+    GREEN_DEEP,
+    GREEN_DARK,
+    GREEN_MID,
+    GREEN_LIGHT,
+  ]);
+
+  // The two tabs, stepping down and left away from the blade.
+  const tabs = [
+    { p: [[27, 54], [12, 63], [29, 67]], c: GREEN_MID },
+    { p: [[27, 54], [29, 67], [30, 59]], c: GREEN_DARK },
+    { p: [[29, 70], [10, 81], [31, 84]], c: GREEN_DARK },
+    { p: [[29, 70], [31, 84], [32, 75]], c: GREEN_DEEP },
   ];
 
-  // Shifted right of the green blade so a clean white seam runs between them —
-  // the two leaves must read as separate shapes, not one dark mass.
-  const ink = [
-    { p: [[58, 90], [57, 58], [70, 54]], c: INK_MID },
-    { p: [[58, 90], [70, 54], [73, 88]], c: INK_DARK },
-    { p: [[57, 58], [64, 22], [70, 54]], c: INK_LIGHT },
-    { p: [[64, 22], [78, 44], [70, 54]], c: INK_MID },
-    { p: [[70, 54], [78, 44], [82, 66]], c: INK_DARK },
-    { p: [[70, 54], [82, 66], [73, 88]], c: INK_DEEP },
-    { p: [[64, 22], [70, 18], [78, 44]], c: INK_DARK },
+  /*
+   * The dark leaf: a wide sweep with a notch cut into its top, so it reads as
+   * two prongs rather than one blade. The hexagon sits in that notch — that
+   * relationship is the whole silhouette, and flattening it to a single spike
+   * loses the mark.
+   */
+  const inkOutline = [
+    [47, 26],
+    [58, 45],
+    [66, 50],
+    [74, 31],
+    [86, 25],
+    [81, 54],
+    [74, 70],
+    [58, 86],
+    [37, 91],
+    [45, 60],
   ];
+  const ink = fan([61, 57], inkOutline, [
+    INK_LIGHT,
+    INK_MID,
+    INK_LIGHT,
+    INK_MID,
+    INK_DARK,
+    INK_DEEP,
+    INK_DARK,
+    INK_DEEP,
+    INK_DARK,
+    INK_MID,
+  ]);
 
-  // The hexagon that floats above the blades, drawn as a fan from its centre.
-  const cx = 82;
-  const cy = 13;
-  const r = 8.5;
+  // The hexagon that floats in the notch, drawn as a fan from its centre.
+  const cx = 67;
+  const cy = 15;
+  const r = 9.5;
   const hexShades = [INK_LIGHT, INK_MID, INK_DARK, INK_DEEP, INK_DARK, INK_MID];
   const hex = [];
   for (let i = 0; i < 6; i++) {
@@ -151,7 +201,26 @@ function markTriangles() {
     });
   }
 
-  return [...green, ...ink, ...hex];
+  /*
+   * The white halo: the green outline pushed out from its centre, painted
+   * between the two leaves. Without it the green sits directly on the black
+   * and the two shapes merge into one dark mass at small sizes.
+   */
+  const HALO = 1.09;
+  const haloOutline = greenOutline.map(([x, y]) => [
+    greenCentre[0] + (x - greenCentre[0]) * HALO,
+    greenCentre[1] + (y - greenCentre[1]) * HALO,
+  ]);
+  const halo = fan(greenCentre, haloOutline, [WHITE]);
+  const tabHalo = tabs.map(({ p }) => ({
+    p: p.map(([x, y]) => [
+      greenCentre[0] + (x - greenCentre[0]) * HALO,
+      greenCentre[1] + (y - greenCentre[1]) * HALO,
+    ]),
+    c: WHITE,
+  }));
+
+  return [...ink, ...halo, ...tabHalo, ...green, ...tabs, ...hex];
 }
 
 const SS = 3; // supersampling factor per axis

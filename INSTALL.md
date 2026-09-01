@@ -38,10 +38,9 @@ Everything below is done in a browser. **No terminal needed.**
      protects accounts, none of which involves email.
    - **Save**.
 
-   If you do switch confirmation on later, the app is ready for it: the email
-   Supabase sends carries a **link**, and after signup the app sits on "check
-   your email" and moves on by itself the moment that link is clicked, even in
-   another tab.
+   With it off, signup completes immediately and no email is sent at all. If
+   you switch it on later the app still works — it tells the new user to check
+   their inbox and sign in once confirmed.
 8. **Skip the email templates.** Supabase keeps them read-only until the project
    has its own SMTP, and nothing here needs them. The one thing that does want
    working email is **"Forgot password"** — until you set sending up, reset a

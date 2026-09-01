@@ -108,12 +108,17 @@ existing accounts, it does not encrypt anything, and it does not stop anybody
 reading anybody else's data — items 1 through 8 do that, and they work whether
 confirmation is on or off.
 
-### So: turn it off for now
+### So it is off
 
 **Authentication → Sign In / Providers → Email → Confirm email → off.**
 
-Signup becomes instant, no email is sent, and nothing above weakens. This is a
-perfectly reasonable place to launch from with a small number of users.
+Signup completes instantly, no email is sent, and nothing above weakens. The
+app has no verification step in it at all right now — turning the Supabase
+setting back on is all that is needed to reintroduce one.
+
+The password rules stayed, because they are the part that actually guards an
+account. Confirmation proves an address belongs to someone at the moment they
+sign up; it does nothing to protect the account from that point on.
 
 The one real consequence: **"Forgot password" needs email to work.** On the
 built-in mailer it will fail past a couple of attempts an hour. Until you have

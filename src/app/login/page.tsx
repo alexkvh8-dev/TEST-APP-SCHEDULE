@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 
 import { AuthForm } from "@/components/AuthForm";
+import { Logo } from "@/components/Logo";
 import { safeNext } from "@/lib/redirect";
 
 export const metadata = { title: "Sign in — FinX" };
@@ -24,19 +25,7 @@ export default async function LoginPage({
     <main className="flex min-h-dvh flex-col items-center justify-center px-6 py-12">
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center text-center">
-          <svg width="56" height="56" viewBox="0 0 100 100" aria-hidden className="mb-4">
-            <polygon points="38,90 30,66 40,40 50,30 52,88" fill="#22b24c" />
-            <polygon points="30,66 17,74 31,78" fill="#117a38" />
-            <polygon points="26,80 12,88 27,90 34,92" fill="#08542c" />
-            <polygon
-              points="58,90 57,58 64,22 70,18 78,44 82,66 73,88"
-              fill="var(--ink)"
-            />
-            <polygon
-              points="82,4.5 89.4,8.8 89.4,17.3 82,21.5 74.6,17.3 74.6,8.8"
-              fill="var(--ink)"
-            />
-          </svg>
+          <Logo size={64} className="mb-4" />
           <h1 className="text-3xl font-extrabold tracking-tight">FinX</h1>
           <p className="mt-1.5 text-sm" style={{ color: "var(--ink-2)" }}>
             Every rupee, tracked.
