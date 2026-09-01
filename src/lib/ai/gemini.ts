@@ -138,6 +138,138 @@ export async function generateInsight(
   );
 }
 
+// ---------------------------------------------------------------------------
+// Voice — turn "spent 14 dollars on coffee with Dan" into an entry
+// ---------------------------------------------------------------------------
+
+const VOICE_SCHEMA = {
+  type: "OBJECT",
+  properties: {
+    amount: { type: "NUMBER" },
+    item: { type: "STRING" },
+    category: { type: "STRING", enum: [...CATEGORIES] },
+    need_level: { type: "STRING", enum: [...NEED_LEVELS] },
+    day_offset: { type: "INTEGER" },
+    understood: { type: "BOOLEAN" },
+  },
+  required: ["amount", "item", "category", "need_level", "day_offset", "understood"],
+} as const;
+
+export interface VoiceParse {
+  amount: number;
+  item: string;
+  category: string;
+  need_level: string;
+  /** 0 = today, -1 = yesterday. */
+  day_offset: number;
+  understood: boolean;
+}
+
+export async function parseVoice(transcript: string, currency: string): Promise<VoiceParse> {
+  return generateJson<VoiceParse>(
+    "You turn a spoken sentence into one expense record for a budgeting app.\n" +
+      `Amounts are in ${currency} unless the speaker names another currency.\n` +
+      "Numbers may be spoken as words (\"fourteen\", \"sau\", \"do sau pachas\") — convert them.\n" +
+      "item: a short natural label, 1-4 words, no amount in it. Keep the person's own " +
+      "wording where you can (\"coffee with Dan\", not \"beverage purchase\").\n" +
+      "day_offset: 0 for today or unspecified, -1 for yesterday, -2 for the day before.\n" +
+      "understood: false if there is no clear amount, and set amount to 0.\n" +
+      "Classify need vs want the same way you would any expense. Reply with JSON only.",
+    `Spoken: "${transcript}"`,
+    VOICE_SCHEMA,
+    { thinking: false, timeoutMs: 20_000 },
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Receipt — split a photo into individual lines
+// ---------------------------------------------------------------------------
+
+const RECEIPT_SCHEMA = {
+  type: "OBJECT",
+  properties: {
+    merchant: { type: "STRING" },
+    currency_symbol: { type: "STRING" },
+    items: {
+      type: "ARRAY",
+      items: {
+        type: "OBJECT",
+        properties: {
+          item: { type: "STRING" },
+          amount: { type: "NUMBER" },
+          category: { type: "STRING", enum: [...CATEGORIES] },
+          need_level: { type: "STRING", enum: [...NEED_LEVELS] },
+        },
+        required: ["item", "amount", "category", "need_level"],
+      },
+    },
+    total: { type: "NUMBER" },
+    readable: { type: "BOOLEAN" },
+  },
+  required: ["merchant", "items", "total", "readable"],
+} as const;
+
+export interface ReceiptParse {
+  merchant: string;
+  items: { item: string; amount: number; category: string; need_level: string }[];
+  total: number;
+  readable: boolean;
+}
+
+export async function parseReceipt(
+  base64: string,
+  mimeType: string,
+  currency: string,
+): Promise<ReceiptParse> {
+  const res = await fetch(`${BASE}/${GEMINI_MODEL}:generateContent`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-goog-api-key": process.env.GEMINI_API_KEY!,
+    },
+    body: JSON.stringify({
+      systemInstruction: {
+        parts: [
+          {
+            text:
+              "You read a photographed shop receipt and split it into individual purchases " +
+              `for a budgeting app. Amounts are in ${currency}.\n` +
+              "Return one entry per purchasable line. Skip subtotals, tax lines, discounts, " +
+              "loyalty points and the total itself.\n" +
+              "item: a readable name — expand obvious abbreviations (\"MILK 2L\" to \"Milk, 2L\").\n" +
+              "Classify each line as a need or a want on its own merits: staple food, " +
+              "household basics and medicine are needs; treats, magazines and " +
+              "non-essentials are wants.\n" +
+              "total: the receipt's printed total if visible, else the sum of your items.\n" +
+              "readable: false if the photo is too blurry or is not a receipt — then return " +
+              "an empty items array.\n" +
+              "Reply with JSON only.",
+          },
+        ],
+      },
+      contents: [
+        {
+          role: "user",
+          parts: [
+            { inline_data: { mime_type: mimeType, data: base64 } },
+            { text: "Split this receipt into individual entries." },
+          ],
+        },
+      ],
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: RECEIPT_SCHEMA,
+      },
+    }),
+    signal: AbortSignal.timeout(60_000),
+  });
+
+  const body = (await res.json()) as GeminiResponse;
+  if (!res.ok) throw new Error(body.error?.message ?? `Gemini returned ${res.status}`);
+
+  return JSON.parse(textOf(body)) as ReceiptParse;
+}
+
 /** Streams the coach's reply as plain text chunks. */
 export async function* streamCoach(
   context: string,

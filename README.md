@@ -13,16 +13,32 @@ needs a credit card.
 
 - **Email + password sign-in** — your data lives in the cloud against your email.
   Sign in on a phone, a laptop, anything, and everything is there.
-- **Two-tap logging** — a `+` button bottom-right, an item, an amount. PKR by
-  default, nine currencies available; everything is normalised to your base
-  currency at the rate that applied when you entered it.
+- **Two-tap logging** — a numpad sheet off the `+` button, an item, an amount.
+  PKR by default, nine currencies available; everything is normalised to your
+  base currency at the rate that applied when you entered it. Saving shows one
+  true statement about the spend — never praise, never a telling-off.
+- **Safe-to-spend** — the home screen leads with what is genuinely free to spend
+  today: the rest of the monthly budget, spread over the days that remain. With
+  no budget set it asks for one instead of inventing a number.
+- **Log by voice** — say "three hundred on chai". Speech-to-text happens in the
+  browser, so only the words travel; the parsed result opens the normal add
+  sheet for review before it is saved.
+- **Receipt split-scanning** — one photo becomes one entry per line, not a
+  single lump sum. Every line is editable and individually droppable.
+- **Streaks** — consecutive days *logged*, not days under budget: rewarding a
+  cheap day would make writing down the expensive one cost you something. Today
+  stays open until it ends, so an unlogged morning never breaks a live run.
+- **Budget envelopes** — a per-category limit with a bar and a remainder, plus
+  the monthly figure that drives safe-to-spend.
 - **Chart-first reports** — daily, weekly and monthly. Needs-vs-wants split,
   day-by-day bars, top categories, a trend line. One headline, one verdict and
   at most three tips of prose; the rest is graphs.
 - **A money coach** — chat that only discusses your finances and declines
   everything else.
-- **Nudges** — a push notification if nothing has been logged for 90 minutes,
-  inside waking hours you choose. Weekly report Sunday 8 AM, monthly on the 1st.
+- **Nudges** — a push notification after a stretch of no logging that you choose
+  (four hours by default, two to twelve), inside waking hours you choose. Weekly
+  report Sunday 8 AM, monthly on the 1st.
+- **Light and dark** — a designed dark set, not an inversion, chosen per device.
 
 ---
 
@@ -58,15 +74,19 @@ npm install
 2. **SQL Editor → New query** → paste all of `supabase/schema.sql` → **Run**.
    It creates the tables, row-level security policies, and the trigger that makes
    a profile row on signup. It is safe to re-run.
-3. **Authentication → Sign In / Providers → Email** — make sure it is enabled,
+3. **New query** again → paste all of `supabase/migration-002-features.sql` →
+   **Run**. It adds the reminder spacing setting, the `category_budgets` table,
+   and the `group_id`/`source` columns behind voice logging and receipt
+   scanning. Also safe to re-run.
+4. **Authentication → Sign In / Providers → Email** — make sure it is enabled,
    then **turn off "Confirm email"**. That makes signup instant and means you
    never need to configure an email server. (Leave it on if you would rather
    verify addresses — Supabase's built-in mailer sends a few messages an hour on
    the free tier, which is fine for one person.)
-4. **Authentication → URL Configuration** → set **Site URL** to your app's URL
+5. **Authentication → URL Configuration** → set **Site URL** to your app's URL
    and add `http://localhost:3000/**` plus `https://your-app.vercel.app/**` to
    **Redirect URLs**.
-5. Copy the project URL and both API keys from **Project Settings → API Keys**.
+6. Copy the project URL and both API keys from **Project Settings → API Keys**.
 
 > There is no Google Cloud console step and no OAuth client to create. You sign
 > up with an email and a password, and that account is what syncs your data
@@ -122,8 +142,8 @@ settings. That is the whole deploy.
 
 ### Scheduled jobs
 
-Vercel's Hobby plan only runs cron **once a day**, which cannot drive a 90-minute
-nudge — so this repo schedules the jobs from **GitHub Actions** instead, which is
+Vercel's Hobby plan only runs cron **once a day**, which cannot drive a
+few-hourly nudge — so this repo schedules the jobs from **GitHub Actions** instead, which is
 free. `.github/workflows/cron.yml` is already committed. Set two things once:
 
 **Repo → Settings → Secrets and variables → Actions**
@@ -138,7 +158,7 @@ both endpoints answer `200`.
 
 | Job | Runs | What it does |
 |---|---|---|
-| Inactivity nudge | every 15 min | Nudges you if nothing has been logged for 90 minutes, inside your waking hours |
+| Inactivity nudge | every 15 min | Nudges you after your chosen quiet stretch (4 hours by default), inside your waking hours |
 | Scheduled reports | hourly | Generates and pushes whichever report is due in your timezone |
 
 Two GitHub quirks worth knowing, both harmless here:
@@ -186,12 +206,15 @@ src/
       anthropic.ts    Optional, paid
       heuristics.ts   The zero-key engine: keyword classifier, rules summary, rules coach
       prompts.ts      Prompts shared by both providers
+    dashboard.ts      Streak, safe-to-spend, repeat chips, the post-save statement
     periods.ts        Timezone-aware day/week/month maths, Intl only
     stats.ts          Raw rows -> the shape charts and the model both consume
     reports.ts        Builds a report, reusing the cached summary when nothing changed
     rates.ts          Live FX with a static fallback
     push.ts           web-push delivery, prunes dead subscriptions
 supabase/schema.sql   Tables, RLS policies, signup trigger
+supabase/migration-002-features.sql
+                      Reminder spacing, category budgets, voice/receipt columns
 .github/workflows/    Free scheduler for the cron jobs
 ```
 

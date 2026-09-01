@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { useTheme, type ThemeChoice } from "@/components/useTheme";
 import { CURRENCIES } from "@/lib/currency";
 import type { Profile } from "@/lib/types";
 
@@ -10,6 +11,9 @@ const HOURS = Array.from({ length: 24 }, (_, h) => ({
   value: h,
   label: `${((h + 11) % 12) + 1}:00 ${h < 12 ? "AM" : "PM"}`,
 }));
+
+/** Three and four hours are the sane middle; the rest are there for edge cases. */
+const INTERVALS = [2, 3, 4, 6, 8, 12];
 
 /** VAPID keys travel as base64url; the Push API wants a Uint8Array. */
 function urlBase64ToUint8Array(base64: string): Uint8Array {
@@ -21,13 +25,18 @@ function urlBase64ToUint8Array(base64: string): Uint8Array {
   return output;
 }
 
+/*
+ * The label wraps onto its own line rather than compressing when the control
+ * beside it is wide — an hour range needs two selects, and squeezing "Only
+ * between" into one word per line is worse than a taller row.
+ */
 function Row({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-4 py-3">
-      <div className="min-w-0">
-        <div className="text-sm">{label}</div>
+    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3">
+      <div className="min-w-40 flex-1">
+        <div className="text-sm font-semibold">{label}</div>
         {hint && (
-          <div className="text-xs" style={{ color: "var(--text-muted)" }}>
+          <div className="text-xs" style={{ color: "var(--muted)" }}>
             {hint}
           </div>
         )}
@@ -54,6 +63,7 @@ export function SettingsScreen({
   const [status, setStatus] = useState<string | null>(null);
   const [pushState, setPushState] = useState<"unknown" | "on" | "off" | "unsupported">("unknown");
   const [pushBusy, setPushBusy] = useState(false);
+  const { theme, choose } = useTheme();
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -151,23 +161,49 @@ export function SettingsScreen({
     }
   }
 
-  const card = {
-    background: "var(--surface-1)",
-    border: "1px solid var(--border)",
-  } as const;
+  const card = { background: "var(--card)", borderRadius: 22, boxShadow: "var(--shadow)" } as const;
 
   return (
-    <div className="flex flex-col gap-4 pb-8">
+    <div className="flex flex-col gap-4 pb-4">
       <header className="flex items-baseline justify-between gap-3">
-        <h1 className="text-xl font-semibold">Settings</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight">Settings</h1>
         {status && (
-          <span className="text-xs" style={{ color: "var(--text-secondary)" }} role="status">
+          <span className="text-xs font-semibold" style={{ color: "var(--ink-2)" }} role="status">
             {status}
           </span>
         )}
       </header>
 
-      <section className="rounded-2xl px-4" style={card}>
+      {/* Appearance is a per-device choice, so it never touches the profile. */}
+      <section className="px-4" style={card}>
+        <Row label="Appearance" hint="Follows your phone unless you pick one">
+          <div className="flex gap-1 rounded-full p-1" style={{ background: "var(--field)" }}>
+            {(
+              [
+                ["system", "Auto"],
+                ["light", "Light"],
+                ["dark", "Dark"],
+              ] as [ThemeChoice, string][]
+            ).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => choose(value)}
+                aria-pressed={theme === value}
+                className="rounded-full px-3 py-1.5 text-xs font-bold"
+                style={{
+                  background: theme === value ? "var(--card)" : "transparent",
+                  color: theme === value ? "var(--ink)" : "var(--muted)",
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </Row>
+      </section>
+
+      <section className="px-4" style={card}>
         <Row label="Currency" hint="Everything is totalled in this currency">
           <select
             value={profile.base_currency}
@@ -216,7 +252,7 @@ export function SettingsScreen({
 
       <h2 className="mt-1 text-sm font-semibold">Reminders</h2>
 
-      <section className="rounded-2xl px-4" style={card}>
+      <section className="px-4" style={card}>
         <Row
           label="Notifications on this device"
           hint={
@@ -231,30 +267,51 @@ export function SettingsScreen({
             type="button"
             disabled={pushBusy || pushState === "unsupported"}
             onClick={pushState === "on" ? disablePush : enablePush}
-            className="rounded-lg px-3 py-2 text-sm font-medium disabled:opacity-50"
-            style={
+            className={
               pushState === "on"
-                ? { background: "var(--surface-2)", color: "var(--text-secondary)" }
-                : { background: "var(--series-needs)", color: "#fff" }
+                ? "btn-quiet px-4 py-2 text-sm disabled:opacity-50"
+                : "btn-lime px-4 py-2 text-sm"
             }
           >
             {pushBusy ? "…" : pushState === "on" ? "Turn off" : "Turn on"}
           </button>
         </Row>
 
-        <div style={{ borderTop: "1px solid var(--grid)" }} />
+        <div style={{ borderTop: "1px solid var(--line)" }} />
 
-        <Row label="Nudge me if I stop logging" hint="Fires after 90 minutes of no entries">
+        <Row
+          label="Nudge me if I stop logging"
+          hint={`Fires after ${profile.reminder_interval_hours ?? 4} quiet hours`}
+        >
           <input
             type="checkbox"
             checked={profile.reminders_enabled}
             onChange={(e) => save({ reminders_enabled: e.target.checked })}
-            className="size-5 accent-[var(--series-needs)]"
+            className="size-5"
+            style={{ accentColor: "var(--ink)" }}
             aria-label="Inactivity nudges"
           />
         </Row>
 
-        <div style={{ borderTop: "1px solid var(--grid)" }} />
+        <div style={{ borderTop: "1px solid var(--line)" }} />
+
+        <Row label="How often at most" hint="A nudge you resent is a nudge that gets the app deleted">
+          <select
+            value={profile.reminder_interval_hours ?? 4}
+            onChange={(e) => save({ reminder_interval_hours: Number(e.target.value) })}
+            className="rounded-lg px-3 py-2 text-sm"
+            style={selectStyle}
+            aria-label="Hours between nudges"
+          >
+            {INTERVALS.map((hours) => (
+              <option key={hours} value={hours}>
+                Every {hours} hours
+              </option>
+            ))}
+          </select>
+        </Row>
+
+        <div style={{ borderTop: "1px solid var(--line)" }} />
 
         <Row label="Only between" hint="Nudges stay inside these hours">
           <div className="flex items-center gap-2">
@@ -310,7 +367,7 @@ export function SettingsScreen({
 
       <h2 className="mt-1 text-sm font-semibold">Account</h2>
 
-      <section className="rounded-2xl px-4" style={card}>
+      <section className="px-4" style={card}>
         <Row
           label={profile.email ?? "Signed in"}
           hint="Sign in with this email on any device to see all your data"

@@ -1,105 +1,143 @@
 @import "tailwindcss";
 
 /*
- * Tokens. Light values live on bare :root so a viewer with no explicit choice
- * still gets a complete palette; dark values are redefined twice — once for the
- * OS setting, once for the in-app toggle — so neither can lose to the other.
+ * Paisa design tokens.
  *
- * Series colours are the validated categorical slots 1 and 2 (blue = needs,
- * orange = wants). Unclassified spend uses muted ink rather than a third hue:
- * it is an absence of information, not another category.
+ * Lime is the action colour: the add button, primary buttons, the insight
+ * pill, the streak ring. It is never used for data — the moment lime also
+ * meant "food category" the eye would stop knowing what it points at.
+ *
+ * Categories and the needs/wants split get their own set. Needs is a neutral
+ * and Wants is orange: needs are not an achievement and wants are not a sin,
+ * so neither gets a "good" colour.
+ *
+ * Dark mode is a designed set, not an inversion — the ground drops to a warm
+ * near-black, cards lift lighter, lime is unchanged because it already reads
+ * on both, and Needs flips dark-grey to light-grey so it stays the quiet one.
  */
 :root {
   color-scheme: light;
 
-  --page: #f9f9f7;
-  --surface-1: #fcfcfb;
-  --surface-2: #f2f1ed;
+  --bg: #efece6;
+  --card: #ffffff;
+  --field: #f4f2ec;
 
-  --text-primary: #0b0b0b;
-  --text-secondary: #52514e;
-  --text-muted: #898781;
+  --ink: #16150f;
+  --ink-2: #6c6759;
+  --muted: #9c9789;
+  --line: rgba(22, 21, 15, 0.09);
+  --border: rgba(22, 21, 15, 0.12);
 
-  --grid: #e1e0d9;
-  --axis: #c3c2b7;
-  --border: rgba(11, 11, 11, 0.1);
+  --lime: #c4f542;
+  --lime-ink: #16150f;
+  --lime-dim: #e4fbaa;
 
-  --series-needs: #2a78d6;
-  --series-wants: #eb6834;
-  --series-unclear: #898781;
+  --needs: #3e3b34;
+  --wants: #f0813c;
+  --wants-soft: rgba(240, 129, 60, 0.16);
 
-  --good: #006300;
-  --critical: #d03b3b;
+  --cat-1: #c4f542;
+  --cat-2: #7c9fe8;
+  --cat-3: #f2cf5b;
+  --cat-4: #f0813c;
+  --cat-5: #67c848;
 
-  --shadow: 0 1px 2px rgba(11, 11, 11, 0.06), 0 8px 24px rgba(11, 11, 11, 0.06);
+  --good: #3f9e2c;
+  --critical: #d0492f;
+
+  --shadow: 0 1px 2px rgba(22, 21, 15, 0.05), 0 8px 22px rgba(22, 21, 15, 0.07);
+  --shadow-lg: 0 2px 6px rgba(22, 21, 15, 0.06), 0 18px 44px rgba(22, 21, 15, 0.12);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
 
-    --page: #0d0d0d;
-    --surface-1: #1a1a19;
-    --surface-2: #232322;
+    --bg: #0f0f0d;
+    --card: #1b1b18;
+    --field: #232320;
 
-    --text-primary: #ffffff;
-    --text-secondary: #c3c2b7;
-    --text-muted: #898781;
+    --ink: #f4f2eb;
+    --ink-2: #ada99c;
+    --muted: #7c7768;
+    --line: rgba(244, 242, 235, 0.1);
+    --border: rgba(244, 242, 235, 0.13);
 
-    --grid: #2c2c2a;
-    --axis: #383835;
-    --border: rgba(255, 255, 255, 0.1);
+    --lime-dim: #2f3a15;
 
-    --series-needs: #3987e5;
-    --series-wants: #d95926;
-    --series-unclear: #898781;
+    --needs: #cfcaba;
+    --wants: #f0813c;
+    --wants-soft: rgba(240, 129, 60, 0.22);
 
-    --good: #0ca30c;
-    --critical: #d03b3b;
+    --good: #7bd45f;
+    --critical: #e8674a;
 
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3);
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 8px 22px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.5), 0 18px 44px rgba(0, 0, 0, 0.5);
   }
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  --page: #0d0d0d;
-  --surface-1: #1a1a19;
-  --surface-2: #232322;
+  --bg: #0f0f0d;
+  --card: #1b1b18;
+  --field: #232320;
 
-  --text-primary: #ffffff;
-  --text-secondary: #c3c2b7;
-  --text-muted: #898781;
+  --ink: #f4f2eb;
+  --ink-2: #ada99c;
+  --muted: #7c7768;
+  --line: rgba(244, 242, 235, 0.1);
+  --border: rgba(244, 242, 235, 0.13);
 
-  --grid: #2c2c2a;
-  --axis: #383835;
-  --border: rgba(255, 255, 255, 0.1);
+  --lime-dim: #2f3a15;
 
-  --series-needs: #3987e5;
-  --series-wants: #d95926;
-  --series-unclear: #898781;
+  --needs: #cfcaba;
+  --wants: #f0813c;
+  --wants-soft: rgba(240, 129, 60, 0.22);
 
-  --good: #0ca30c;
-  --critical: #d03b3b;
+  --good: #7bd45f;
+  --critical: #e8674a;
 
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 8px 22px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.5), 0 18px 44px rgba(0, 0, 0, 0.5);
+}
+
+/*
+ * Bridge tokens.
+ *
+ * The charts and the older screens were written against a surface/text/series
+ * vocabulary. Rather than rewrite every fill by hand, those names now resolve
+ * to the lime system above — one place to change, and no screen can drift out
+ * of the palette. New code should use the tokens above directly.
+ */
+:root {
+  --page: var(--bg);
+  --surface-1: var(--card);
+  --surface-2: var(--field);
+  --text-primary: var(--ink);
+  --text-secondary: var(--ink-2);
+  --text-muted: var(--muted);
+  --grid: var(--line);
+  --axis: var(--border);
+  --series-needs: var(--needs);
+  --series-wants: var(--wants);
+  --series-unclear: var(--muted);
 }
 
 @theme inline {
-  --color-page: var(--page);
-  --color-surface-1: var(--surface-1);
-  --color-surface-2: var(--surface-2);
-  --color-ink: var(--text-primary);
-  --color-ink-secondary: var(--text-secondary);
-  --color-ink-muted: var(--text-muted);
-  --color-hairline: var(--border);
-  --color-needs: var(--series-needs);
-  --color-wants: var(--series-wants);
-  --color-unclear: var(--series-unclear);
+  --color-bg: var(--bg);
+  --color-card: var(--card);
+  --color-field: var(--field);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-muted: var(--muted);
+  --color-lime: var(--lime);
+  --color-needs: var(--needs);
+  --color-wants: var(--wants);
   --color-good: var(--good);
   --color-critical: var(--critical);
-  --font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
 }
 
 * {
@@ -108,41 +146,134 @@
 
 html,
 body {
-  background: var(--page);
-  color: var(--text-primary);
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--ink);
   overscroll-behavior-y: none;
 }
 
 body {
-  /* Room for the fixed bottom nav plus the home indicator on iOS. */
-  padding-bottom: calc(64px + env(safe-area-inset-bottom));
+  font-family: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Numbers that stack vertically must align; standalone figures should not. */
+/* Screens with the tab bar reserve room for it plus the home indicator. */
+.has-tabbar {
+  padding-bottom: calc(84px + env(safe-area-inset-bottom));
+}
+
 .tabular {
   font-variant-numeric: tabular-nums;
 }
 
-/* Charts scroll inside their own container — the page never scrolls sideways. */
+.num {
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.label {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.card {
+  background: var(--card);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+}
+
+/* The one primary action on a screen. Lime ground, ink text — never white. */
+.btn-lime {
+  background: var(--lime);
+  color: var(--lime-ink);
+  font-weight: 700;
+  border-radius: 999px;
+  transition: transform 0.12s ease;
+}
+.btn-lime:active {
+  transform: scale(0.97);
+}
+.btn-lime:disabled {
+  opacity: 0.55;
+}
+
+/* Quiet secondary action: reads as a control, not as a call to action. */
+.btn-quiet {
+  background: var(--field);
+  color: var(--ink-2);
+  font-weight: 600;
+  border-radius: 999px;
+}
+
+.chip {
+  background: var(--field);
+  color: var(--ink);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
 .scroll-x {
   overflow-x: auto;
-  scrollbar-width: thin;
+  scrollbar-width: none;
+}
+.scroll-x::-webkit-scrollbar {
+  display: none;
+}
+
+input,
+textarea,
+select,
+button {
+  font-family: inherit;
+}
+
+/* Never let iOS zoom the viewport when a field takes focus. */
+input,
+textarea,
+select {
+  font-size: 16px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+  border-radius: 8px;
 }
 
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
     transform: none;
   }
 }
-
 .rise {
   animation: rise 0.22s ease-out both;
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.35;
+  }
+  70% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+.pulse-ring {
+  animation: pulse-ring 1.8s ease-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -150,6 +281,7 @@ body {
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
 }

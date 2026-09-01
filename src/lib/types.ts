@@ -1,5 +1,6 @@
 export type NeedLevel = "need" | "want" | "unclear";
 export type Period = "daily" | "weekly" | "monthly";
+export type ExpenseSource = "manual" | "voice" | "receipt" | "repeat";
 
 export interface Profile {
   id: string;
@@ -12,6 +13,8 @@ export interface Profile {
   reminders_enabled: boolean;
   reminder_start_hour: number;
   reminder_end_hour: number;
+  /** Hours of no logging before a nudge. Default 4. */
+  reminder_interval_hours: number;
   last_reminder_at: string | null;
   daily_summary_hour: number;
   created_at: string;
@@ -30,8 +33,62 @@ export interface Expense {
   category: string | null;
   need_level: NeedLevel;
   spent_at: string;
+  /** Links entries created together from one scanned receipt. */
+  group_id: string | null;
+  source: ExpenseSource;
   created_at: string;
   updated_at: string;
+}
+
+export interface CategoryBudget {
+  id: string;
+  user_id: string;
+  category: string;
+  amount: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/** One frequently-repeated purchase, offered as a one-tap chip. */
+export interface RepeatItem {
+  item: string;
+  amount: number;
+  currency: string;
+  category: string | null;
+  need_level: NeedLevel;
+  count: number;
+}
+
+export interface StreakInfo {
+  /** Consecutive days with at least one entry, counting back from today. */
+  current: number;
+  longest: number;
+  /** True once something has been logged today. */
+  loggedToday: boolean;
+  /** Last 7 local dates, oldest first. */
+  week: { date: string; total: number; logged: boolean }[];
+}
+
+export interface SafeToSpend {
+  /** null when no monthly budget is set. */
+  amount: number | null;
+  monthlyBudget: number | null;
+  spentThisMonth: number;
+  remainingThisMonth: number;
+  daysLeft: number;
+  /** Spend remaining in the current week, when a budget exists. */
+  leftThisWeek: number | null;
+}
+
+export interface DashboardData {
+  currency: string;
+  today: { total: number; needs: number; wants: number; unclear: number; count: number };
+  safeToSpend: SafeToSpend;
+  streak: StreakInfo;
+  repeats: RepeatItem[];
+  expenses: Expense[];
+  /** The single most useful sentence right now, or null. */
+  insight: { text: string; kind: "info" | "budget"; category?: string; left?: number } | null;
 }
 
 /**

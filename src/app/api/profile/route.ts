@@ -65,6 +65,19 @@ export async function PATCH(request: NextRequest) {
     patch.reminders_enabled = Boolean(body.reminders_enabled);
   }
 
+  if (body.reminder_interval_hours !== undefined) {
+    const hours = Number(body.reminder_interval_hours);
+    // Anything under two hours reads as nagging and gets the app uninstalled;
+    // anything over twelve is not a nudge any more.
+    if (!Number.isInteger(hours) || hours < 2 || hours > 12) {
+      return NextResponse.json(
+        { error: "Reminder spacing must be between 2 and 12 hours" },
+        { status: 400 },
+      );
+    }
+    patch.reminder_interval_hours = hours;
+  }
+
   for (const key of ["reminder_start_hour", "reminder_end_hour", "daily_summary_hour"] as const) {
     if (body[key] === undefined) continue;
     const hour = Number(body[key]);

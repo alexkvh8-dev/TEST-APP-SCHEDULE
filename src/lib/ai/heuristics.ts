@@ -141,6 +141,60 @@ export function classifyByRules(item: string): { category: string; need_level: N
 }
 
 /**
+ * Voice parsing without a model. Pulls the first number out of the sentence
+ * and treats the words after "on" / "for" as the item, then runs the keyword
+ * classifier over it. Good enough for "spent 500 on petrol"; anything more
+ * conversational is why the AI path exists.
+ */
+export function parseVoiceByRules(transcript: string): {
+  amount: number;
+  item: string;
+  category: string;
+  need_level: NeedLevel;
+  understood: boolean;
+} {
+  const text = transcript.trim();
+
+  // Digits first, then spelled-out numbers for the common small cases.
+  const digits = text.match(/(\d[\d,]*\.?\d*)/);
+  let amount = digits ? Number(digits[1].replace(/,/g, "")) : 0;
+
+  if (!amount) {
+    const words: Record<string, number> = {
+      one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8,
+      nine: 9, ten: 10, twenty: 20, thirty: 30, forty: 40, fifty: 50,
+      hundred: 100, thousand: 1000, sau: 100, hazaar: 1000, hazar: 1000,
+    };
+    for (const [word, value] of Object.entries(words)) {
+      if (new RegExp(`\\b${word}\\b`, "i").test(text)) {
+        amount = value;
+        break;
+      }
+    }
+  }
+
+  // "spent 500 on petrol for the bike" -> "petrol for the bike"
+  const after = text.match(/\b(?:on|for|at)\s+(.{2,60})$/i);
+  let item = after ? after[1] : text.replace(/(\d[\d,]*\.?\d*)/, "").trim();
+  item = item
+    .replace(/^(i\s+)?(just\s+)?(spent|paid|bought|kharch|kiya)\s+/i, "")
+    .replace(/\b(rupees?|rs\.?|pkr|dollars?|usd|taka|riyal)\b/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (item.length > 60) item = item.slice(0, 60).trim();
+
+  const guess = classifyByRules(item || text);
+
+  return {
+    amount,
+    item: item ? item[0].toUpperCase() + item.slice(1) : "Spend",
+    category: guess.category,
+    need_level: guess.need_level,
+    understood: amount > 0,
+  };
+}
+
+/**
  * A summary built purely from the numbers. Every sentence is a statement of
  * fact about the data, never an invented judgement — that is the honest thing
  * to do without a model, and it still tells you what you need to know.

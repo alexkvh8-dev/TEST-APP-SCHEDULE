@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
 
   await sendToUser(supabase, user.id, {
     title: "Reminders are on",
-    body: "I'll nudge you if nothing's logged for 90 minutes.",
+    body: "I'll nudge you when nothing's been logged for a while.",
     url: "/",
     tag: "paisa-setup",
   });

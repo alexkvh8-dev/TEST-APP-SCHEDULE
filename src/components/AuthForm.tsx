@@ -176,8 +176,7 @@ export function AuthForm({ next }: { next?: string }) {
       <button
         type="submit"
         disabled={busy}
-        className="mt-1 w-full rounded-xl px-4 py-3.5 text-sm font-semibold text-white transition-opacity disabled:opacity-60"
-        style={{ background: "var(--series-needs)" }}
+        className="btn-lime mt-1 w-full px-4 py-3.5 text-sm"
       >
         {busy ? "Working…" : mode === "signup" ? "Create account" : "Sign in"}
       </button>

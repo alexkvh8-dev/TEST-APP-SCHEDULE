@@ -139,7 +139,7 @@ export function CoachScreen() {
                   className="max-w-[85%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed"
                   style={
                     mine
-                      ? { background: "var(--series-needs)", color: "#fff" }
+                      ? { background: "var(--lime)", color: "var(--lime-ink)" }
                       : {
                           background: "var(--surface-1)",
                           border: "1px solid var(--border)",
@@ -183,8 +183,7 @@ export function CoachScreen() {
         <button
           type="submit"
           disabled={sending || !input.trim()}
-          className="rounded-xl px-4 py-3 text-sm font-semibold text-white disabled:opacity-50"
-          style={{ background: "var(--series-needs)" }}
+          className="btn-lime px-5 py-3 text-sm"
         >
           Send
         </button>

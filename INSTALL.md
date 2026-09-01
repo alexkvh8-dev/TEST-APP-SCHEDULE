@@ -22,12 +22,16 @@ Everything below is done in a browser. **No terminal needed.**
 4. Open [`supabase/schema.sql`](supabase/schema.sql) in this repo, copy **all**
    of it, paste it into the editor, and press **Run**.
    You should see *Success. No rows returned.*
-5. Left sidebar → **Authentication** → **Sign In / Providers** → **Email**:
+5. **New query** again, and do the same with
+   [`supabase/migration-002-features.sql`](supabase/migration-002-features.sql).
+   This adds the reminder spacing setting, category budgets, and the columns
+   behind voice logging and receipt scanning. It is safe to run more than once.
+6. Left sidebar → **Authentication** → **Sign In / Providers** → **Email**:
    - Make sure **Enable email provider** is on.
    - Turn **Confirm email** *off*. This makes signup instant and means you never
      have to set up an email server.
    - **Save**.
-6. Left sidebar → **Project Settings** (gear) → **API Keys**. Keep this tab open —
+7. Left sidebar → **Project Settings** (gear) → **API Keys**. Keep this tab open —
    you need three values in a moment:
    - **Project URL**
    - **anon / public** key
@@ -139,8 +143,10 @@ Once installed, open the app → **Settings** tab:
 
 1. **Notifications on this device** → **Turn on** → allow when the browser asks.
    You should immediately get a test notification.
-2. Set **Only between** to your waking hours, so you never get nudged at 3 AM.
-3. Set **Daily summary at** to when you want the end-of-day wrap-up.
+2. Set **How often at most** to the longest gap you want to go unnoticed. Four
+   hours is the default and the one to keep unless you have a reason.
+3. Set **Only between** to your waking hours, so you never get nudged at 3 AM.
+4. Set **Daily summary at** to when you want the end-of-day wrap-up.
 
 Do this separately on each device you want notified.
 
@@ -148,7 +154,7 @@ Do this separately on each device you want notified.
 
 ## Part 5 — Switch on the scheduler
 
-This is what actually sends the 90-minute nudge and the Sunday/monthly reports.
+This is what actually sends the inactivity nudge and the Sunday/monthly reports.
 
 1. On GitHub, go to your repo → **Settings** → **Secrets and variables** →
    **Actions**.
@@ -189,7 +195,7 @@ but you can skip Vercel entirely while you are trying it out.
 | What you see | What it means |
 |---|---|
 | "Failed to fetch" or a blank screen after signing up | The Supabase URL or anon key is wrong, or **Site URL** in step 1.4 does not match your Vercel URL |
-| Signup says "check your email" and nothing arrives | **Confirm email** is still on — turn it off (step 1.5) and sign up again |
+| Signup says "check your email" and nothing arrives | **Confirm email** is still on — turn it off (step 1.1) and sign up again |
 | No **Install** option in the browser | You are not on **https**. Installing needs the deployed URL, not a local IP |
 | No install prompt on iPhone | You are not in Safari, or you are looking for a button — it is under the **Share** menu |
 | Notifications never arrive | Check Part 5 is done and the Actions run went green; on iPhone, check you opened it from the home-screen icon |

@@ -61,7 +61,7 @@ export default async function LoginPage({
           </li>
           <li className="flex gap-3">
             <span aria-hidden>🔔</span>
-            <span>A nudge if you have not logged anything for 90 minutes.</span>
+            <span>A nudge when you have not logged anything for a few hours.</span>
           </li>
         </ul>
       </div>
