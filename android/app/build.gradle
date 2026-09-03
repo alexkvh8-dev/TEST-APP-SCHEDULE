@@ -50,6 +50,17 @@ android {
 }
 
 dependencies {
+    /*
+     * Pin every Kotlin artifact to one version.
+     *
+     * appcompat drags in kotlin-stdlib 1.8.22 while an older transitive wants
+     * kotlin-stdlib-jdk8 1.6.21. Kotlin 1.8 folded the jdk7 and jdk8 stdlibs
+     * into the main one, so pulling both puts the same classes in the APK
+     * twice and the build refuses. The BOM lines them all up.
+     */
+    implementation platform("org.jetbrains.kotlin:kotlin-bom:1.9.24")
+
     implementation "androidx.appcompat:appcompat:1.7.0"
-    implementation "androidx.webkit:webkit:1.11.0"
+    // OnBackPressedCallback, declared rather than relied on transitively.
+    implementation "androidx.activity:activity:1.9.3"
 }
