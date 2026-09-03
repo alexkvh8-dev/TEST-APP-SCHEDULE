@@ -1,0 +1,81 @@
+name: Build Android APK
+
+# Run it by hand: Actions tab -> "Build Android APK" -> Run workflow.
+# The APK lands in the run's Artifacts section as a zip you download.
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "URL the app opens (no trailing slash)"
+        required: true
+        default: "https://test-app-schedule.vercel.app"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+
+      # An APK has to be signed to install at all. If KEYSTORE_BASE64 is set as
+      # a repository secret we use that, so updates keep the same identity and
+      # install over the top. Without it we make a throwaway key and hand it
+      # back as an artifact — save it, or the next build cannot update this one.
+      - name: Prepare signing key
+        id: signing
+        run: |
+          if [ -n "${{ secrets.KEYSTORE_BASE64 }}" ]; then
+            echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/finx.jks"
+            echo "generated=false" >> "$GITHUB_OUTPUT"
+            echo "Using the keystore from repository secrets."
+          else
+            keytool -genkeypair -v \
+              -keystore "$RUNNER_TEMP/finx.jks" \
+              -alias finx \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -storepass "${{ secrets.KEYSTORE_PASSWORD || 'finxbuild' }}" \
+              -keypass "${{ secrets.KEYSTORE_PASSWORD || 'finxbuild' }}" \
+              -dname "CN=FinX, OU=FinX, O=FinX, L=Unknown, ST=Unknown, C=PK"
+            echo "generated=true" >> "$GITHUB_OUTPUT"
+            echo "::warning::No KEYSTORE_BASE64 secret found, so a new signing key was generated. Download the keystore artifact and store it, or future builds will not be able to update this app."
+          fi
+
+      - name: Build the APK
+        working-directory: android
+        env:
+          KEYSTORE_PATH: ${{ runner.temp }}/finx.jks
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD || 'finxbuild' }}
+          KEY_ALIAS: finx
+          KEY_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD || 'finxbuild' }}
+        run: gradle assembleRelease -PfinxUrl="${{ inputs.url }}" --no-daemon
+
+      - name: Report the fingerprint
+        run: |
+          keytool -list -v \
+            -keystore "$RUNNER_TEMP/finx.jks" \
+            -storepass "${{ secrets.KEYSTORE_PASSWORD || 'finxbuild' }}" \
+            | grep -A1 "SHA256:" | head -2 || true
+
+      - name: Upload the APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: FinX-apk
+          path: android/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+
+      - name: Upload the signing key
+        if: steps.signing.outputs.generated == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: FinX-keystore-KEEP-THIS
+          path: ${{ runner.temp }}/finx.jks
+          if-no-files-found: error

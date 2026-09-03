@@ -1,0 +1,55 @@
+plugins {
+    id "com.android.application"
+}
+
+/*
+ * The URL the app loads. Passed in by CI so the app can be pointed at a
+ * different deployment without editing code.
+ */
+def appUrl = project.findProperty("finxUrl") ?: "https://test-app-schedule.vercel.app"
+
+android {
+    namespace "app.finx"
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "app.finx"
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+        buildConfigField "String", "APP_URL", "\"${appUrl}\""
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    signingConfigs {
+        release {
+            storeFile file(System.getenv("KEYSTORE_PATH") ?: "keystore.jks")
+            storePassword System.getenv("KEYSTORE_PASSWORD") ?: "finxlocal"
+            keyAlias System.getenv("KEY_ALIAS") ?: "finx"
+            keyPassword System.getenv("KEY_PASSWORD") ?: "finxlocal"
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            // No shrinking: the app is one activity and a WebView, so R8 would
+            // save a few kilobytes and add a way for the build to break.
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation "androidx.appcompat:appcompat:1.7.0"
+    implementation "androidx.webkit:webkit:1.11.0"
+}

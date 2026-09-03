@@ -451,3 +451,48 @@ and FinX lands in the Start menu properly rather than as a browser shortcut.
 The same zip contains an `.aab` for the Play Store, but a Play developer account
 is a **one-off $25**. Everything else in this project is free, so this is the one
 place you would spend money — and only if you want it publicly listed.
+
+---
+
+## Building the APK yourself, with no PWABuilder
+
+If the PWABuilder route keeps showing an address bar, this repo can build its
+own APK on GitHub's machines instead. It is a **plain WebView app**, not a
+Trusted Web Activity — the page is drawn inside the app process, so there is no
+browser involved, nothing to verify with Digital Asset Links, and no address
+bar is possible on any device or with any default browser.
+
+1. GitHub → your repo → **Actions** tab
+2. **Build Android APK** in the left sidebar → **Run workflow**
+3. Leave the URL as it is (or change it if your app moved) → **Run workflow**
+4. Wait ~4 minutes for the green tick
+5. Open the finished run → scroll to **Artifacts** → download **FinX-apk**
+6. Unzip, move the `.apk` to your phone, tap it, allow **Install unknown apps**
+
+### Keep the keystore
+
+The first run generates a signing key and uploads it as a second artifact,
+**FinX-keystore-KEEP-THIS**. Download it. An Android app can only be updated by
+a build signed with the same key, so without it every future version has to be
+installed as a separate app.
+
+To reuse it, add two repository secrets under
+**Settings → Secrets and variables → Actions**:
+
+| Secret | Value |
+|---|---|
+| `KEYSTORE_BASE64` | the keystore file, base64-encoded (`base64 -w0 finx.jks`) |
+| `KEYSTORE_PASSWORD` | `finxbuild`, unless you changed it |
+
+Later runs will pick it up and stop generating new ones.
+
+### What this build gives up
+
+**Push notifications do not work here.** A WebView has no service worker, so
+the inactivity nudge and the scheduled reports will not arrive in this app. If
+reminders matter more to you than the address bar, Chrome's **Install** (a
+WebAPK) keeps them and also has no bar — see
+[Install on your phone](#part-2--install-on-your-phone).
+
+Everything else works: sign-in, logging, voice, receipt photos, budgets,
+reports and the coach.

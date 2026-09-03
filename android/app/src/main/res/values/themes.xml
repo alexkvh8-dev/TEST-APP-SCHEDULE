@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      No action bar: the whole point of this build is that nothing sits above
+      the page. The window background matches the app's dark ground so the
+      launch does not flash white.
+    -->
+    <style name="Theme.FinX" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:windowBackground">#0F0F0D</item>
+        <item name="android:statusBarColor">#0F0F0D</item>
+        <item name="android:navigationBarColor">#0F0F0D</item>
+    </style>
+</resources>
