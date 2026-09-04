@@ -8,6 +8,7 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,9 +27,16 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+
+import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 /**
  * FinX in a plain WebView.
@@ -50,6 +58,9 @@ public class MainActivity extends AppCompatActivity {
     private WebView webView;
     private ValueCallback<Uri[]> fileCallback;
     private PermissionRequest pendingWebPermission;
+    /** Where the camera was told to write the photo, so it can be read back
+     *  even on devices whose camera app returns no result Intent at all. */
+    private Uri cameraPhotoUri;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -128,27 +139,47 @@ public class MainActivity extends AppCompatActivity {
                 });
             }
 
-            /** <input type="file"> for receipt photos. */
+            /**
+             * <input type="file"> for receipt photos.
+             *
+             * The camera branch needs somewhere to save to before it launches —
+             * without EXTRA_OUTPUT the camera app has nowhere to put the photo,
+             * so onActivityResult comes back with no data and the whole capture
+             * is silently discarded. cameraPhotoUri is where we told it to write;
+             * onActivityResult reads the file back from there.
+             */
             @Override
             public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback,
                                              FileChooserParams params) {
                 if (fileCallback != null) fileCallback.onReceiveValue(null);
                 fileCallback = callback;
+                cameraPhotoUri = null;
 
                 Intent pick = params.createIntent();
-                Intent camera = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-
                 Intent chooser = new Intent(Intent.ACTION_CHOOSER);
                 chooser.putExtra(Intent.EXTRA_INTENT, pick);
                 chooser.putExtra(Intent.EXTRA_TITLE, "Add a receipt");
+
                 // Offering the camera alongside the gallery matters here: a
                 // receipt is usually in your hand, not already in your photos.
-                chooser.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[]{camera});
+                // If the photo file cannot be created for some reason, the
+                // camera option is simply left out — gallery picking still works.
+                File photoFile = createEmptyPhotoFile();
+                if (photoFile != null) {
+                    cameraPhotoUri = FileProvider.getUriForFile(
+                            MainActivity.this, getPackageName() + ".fileprovider", photoFile);
+
+                    Intent camera = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                    camera.putExtra(MediaStore.EXTRA_OUTPUT, cameraPhotoUri);
+                    camera.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                    chooser.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[]{camera});
+                }
 
                 try {
                     startActivityForResult(chooser, REQ_FILE_CHOOSER);
                 } catch (ActivityNotFoundException e) {
                     fileCallback = null;
+                    cameraPhotoUri = null;
                     return false;
                 }
                 return true;
@@ -214,21 +245,39 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode != REQ_FILE_CHOOSER || fileCallback == null) return;
 
         Uri[] results = null;
-        if (resultCode == Activity.RESULT_OK && data != null) {
-            if (data.getDataString() != null) {
+        if (resultCode == Activity.RESULT_OK) {
+            if (data != null && data.getDataString() != null) {
                 results = new Uri[]{Uri.parse(data.getDataString())};
-            } else if (data.getClipData() != null) {
+            } else if (data != null && data.getClipData() != null) {
                 int count = data.getClipData().getItemCount();
                 results = new Uri[count];
                 for (int i = 0; i < count; i++) {
                     results[i] = data.getClipData().getItemAt(i).getUri();
                 }
+            } else if (cameraPhotoUri != null) {
+                // A successful camera capture returns no data Intent at all —
+                // the photo is exactly where we told MediaStore to write it.
+                results = new Uri[]{cameraPhotoUri};
             }
         }
         // A null result is how the WebView is told the picker was cancelled;
         // without it the file input stays stuck and never reopens.
         fileCallback.onReceiveValue(results);
         fileCallback = null;
+        cameraPhotoUri = null;
+    }
+
+    /** A fresh, empty jpg the camera app can write the receipt photo into. */
+    private File createEmptyPhotoFile() {
+        try {
+            File dir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+            if (dir == null) return null;
+            if (!dir.exists() && !dir.mkdirs()) return null;
+            String name = "receipt-" + new SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(new Date());
+            return File.createTempFile(name, ".jpg", dir);
+        } catch (IOException e) {
+            return null;
+        }
     }
 
     @Override

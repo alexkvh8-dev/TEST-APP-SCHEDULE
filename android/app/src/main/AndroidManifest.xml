@@ -31,5 +31,21 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!--
+          Lets the camera app write a receipt photo somewhere our app can read
+          it back from. Required since Android 7 — a bare file:// Uri handed to
+          another app throws FileUriExposedException instead of just failing
+          quietly, which is why this has to be declared, not just coded around.
+        -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 </manifest>
