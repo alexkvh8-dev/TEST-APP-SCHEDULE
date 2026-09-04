@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -36,6 +37,7 @@ import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -162,16 +164,32 @@ public class MainActivity extends AppCompatActivity {
 
                 // Offering the camera alongside the gallery matters here: a
                 // receipt is usually in your hand, not already in your photos.
-                // If the photo file cannot be created for some reason, the
+                // If the photo file cannot be prepared for some reason, the
                 // camera option is simply left out — gallery picking still works.
                 File photoFile = createEmptyPhotoFile();
-                if (photoFile != null) {
-                    cameraPhotoUri = FileProvider.getUriForFile(
-                            MainActivity.this, getPackageName() + ".fileprovider", photoFile);
+                Uri photoUri = photoFile != null ? safeUriForFile(photoFile) : null;
+
+                if (photoUri != null) {
+                    cameraPhotoUri = photoUri;
 
                     Intent camera = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                    camera.putExtra(MediaStore.EXTRA_OUTPUT, cameraPhotoUri);
-                    camera.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                    camera.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
+                    camera.addFlags(
+                            Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+                    // A permission granted only via those flags does not reliably
+                    // reach the resolved app when the intent sits inside
+                    // EXTRA_INITIAL_INTENTS rather than being launched directly —
+                    // a well-documented Android quirk, not a device-specific one.
+                    // The camera opens, the write silently fails, and it closes
+                    // with nothing captured. Granting explicitly to every package
+                    // that can handle the capture is the reliable fix.
+                    for (ResolveInfo info : getPackageManager().queryIntentActivities(camera, 0)) {
+                        grantUriPermission(info.activityInfo.packageName, photoUri,
+                                Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                                        | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    }
+
                     chooser.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[]{camera});
                 }
 
@@ -264,7 +282,15 @@ public class MainActivity extends AppCompatActivity {
         // without it the file input stays stuck and never reopens.
         fileCallback.onReceiveValue(results);
         fileCallback = null;
-        cameraPhotoUri = null;
+
+        if (cameraPhotoUri != null) {
+            // Undo the explicit per-package grants made when the chooser opened —
+            // no reason to leave several apps holding write access to our files
+            // directory longer than the one capture needed.
+            revokeUriPermission(cameraPhotoUri,
+                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            cameraPhotoUri = null;
+        }
     }
 
     /** A fresh, empty jpg the camera app can write the receipt photo into. */
@@ -276,6 +302,16 @@ public class MainActivity extends AppCompatActivity {
             String name = "receipt-" + new SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(new Date());
             return File.createTempFile(name, ".jpg", dir);
         } catch (IOException e) {
+            return null;
+        }
+    }
+
+    /** FileProvider throws if the file falls outside the declared paths — this
+     *  just means "no camera option" rather than breaking the whole chooser. */
+    private Uri safeUriForFile(File file) {
+        try {
+            return FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", file);
+        } catch (IllegalArgumentException e) {
             return null;
         }
     }

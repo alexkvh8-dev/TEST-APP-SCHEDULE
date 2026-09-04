@@ -23,7 +23,7 @@ import type { ChatTurn, Classification } from "./types";
 
 const BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 
-export const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+export const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.6-flash";
 
 export function hasGeminiKey(): boolean {
   return Boolean(process.env.GEMINI_API_KEY);
