@@ -10,6 +10,27 @@
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
 
+    <!--
+      Why the camera never opened.
+
+      Since Android 11 an app cannot see other apps unless it declares what it
+      is looking for. Without this block queryIntentActivities() and
+      resolveActivity() for IMAGE_CAPTURE come back empty on every modern
+      phone, exactly as if no camera app were installed — so the capture intent
+      resolves to nothing, or resolves but is never granted write access to the
+      photo file. Either way the camera appears to do nothing at all, which is
+      precisely the symptom. This is filtering, not a missing camera.
+    -->
+    <queries>
+        <intent>
+            <action android:name="android.media.action.IMAGE_CAPTURE" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.GET_CONTENT" />
+            <data android:mimeType="image/*" />
+        </intent>
+    </queries>
+
     <application
         android:label="@string/app_name"
         android:icon="@mipmap/ic_launcher"

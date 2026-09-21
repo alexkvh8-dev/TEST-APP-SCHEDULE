@@ -1,10 +1,22 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Sheet } from "@/components/Sheet";
 import { currencyMeta, formatMoney } from "@/lib/currency";
 import type { Expense, NeedLevel } from "@/lib/types";
+
+/**
+ * The Android shell installs this. It is absent in a browser, which is the
+ * signal to fall back to a plain file input.
+ */
+declare global {
+  interface Window {
+    FinXNative?: { takePhoto?: () => void; hasCamera?: () => boolean };
+    /** Called by the shell with a JPEG data URL, or null if nothing was taken. */
+    __finxCameraResult?: (dataUrl: string | null) => void;
+  }
+}
 
 interface Line {
   item: string;
@@ -17,6 +29,15 @@ interface Line {
 /** Photos off a phone are 4-8 MB; the reader needs far less than that. */
 const MAX_EDGE = 1400;
 const QUALITY = 0.82;
+
+function dataUrlToFile(dataUrl: string, filename: string): File {
+  const comma = dataUrl.indexOf(",");
+  const mime = /:(.*?);/.exec(dataUrl.slice(0, comma))?.[1] ?? "image/jpeg";
+  const binary = atob(dataUrl.slice(comma + 1));
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+  return new File([bytes], filename, { type: mime });
+}
 
 async function downscale(file: File): Promise<string> {
   const bitmap = await createImageBitmap(file);
@@ -53,17 +74,21 @@ export function ReceiptScanner({
   currency: string;
 }) {
   const [busy, setBusy] = useState(false);
+  const [capturing, setCapturing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [merchant, setMerchant] = useState<string | null>(null);
   const [lines, setLines] = useState<Line[] | null>(null);
   const [saving, setSaving] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
+  const galleryRef = useRef<HTMLInputElement>(null);
 
   function reset() {
     setLines(null);
     setMerchant(null);
     setError(null);
-    if (fileRef.current) fileRef.current.value = "";
+    setCapturing(false);
+    if (cameraRef.current) cameraRef.current.value = "";
+    if (galleryRef.current) galleryRef.current.value = "";
   }
 
   async function handleFile(file: File | undefined) {
@@ -89,8 +114,55 @@ export function ReceiptScanner({
       setError(err instanceof Error ? err.message : "Could not read that receipt");
     } finally {
       setBusy(false);
-      if (fileRef.current) fileRef.current.value = "";
+      if (cameraRef.current) cameraRef.current.value = "";
+      if (galleryRef.current) galleryRef.current.value = "";
     }
+  }
+
+  /*
+   * The shell calls back on its own schedule, long after this render. The ref
+   * keeps the callback pointed at the current handleFile without tearing the
+   * registration down and rebuilding it every keystroke.
+   */
+  const handleFileRef = useRef(handleFile);
+  useEffect(() => {
+    handleFileRef.current = handleFile;
+  });
+
+  useEffect(() => {
+    window.__finxCameraResult = (dataUrl: string | null) => {
+      setCapturing(false);
+      if (!dataUrl) return;
+      try {
+        void handleFileRef.current(dataUrlToFile(dataUrl, "receipt.jpg"));
+      } catch {
+        setError("Could not read that photo. Try again, or pick it from your gallery.");
+      }
+    };
+    return () => {
+      delete window.__finxCameraResult;
+    };
+  }, []);
+
+  /**
+   * In the Android app the camera gets its own native path — routing it through
+   * a file input meant going via the system chooser, which is where captures
+   * were being lost. In a browser the capture-hinted input is still the right
+   * answer.
+   */
+  function takePhoto() {
+    setError(null);
+    const native = typeof window !== "undefined" ? window.FinXNative : undefined;
+    if (typeof native?.takePhoto === "function") {
+      setCapturing(true);
+      try {
+        native.takePhoto();
+        return;
+      } catch {
+        setCapturing(false);
+      }
+    }
+    cameraRef.current?.click();
   }
 
   function update(index: number, patch: Partial<Line>) {
@@ -179,7 +251,11 @@ export function ReceiptScanner({
             </svg>
           </div>
           <p className="text-sm" style={{ color: "var(--muted)" }} aria-live="polite">
-            {busy ? "Reading the receipt…" : "Good light, whole receipt in frame."}
+            {busy
+              ? "Reading the receipt…"
+              : capturing
+                ? "Camera is open — take the shot."
+                : "Good light, whole receipt in frame."}
           </p>
         </div>
       )}
@@ -249,27 +325,37 @@ export function ReceiptScanner({
         </>
       )}
 
+      {/* Browser fallback for the camera: only ever reached when the app shell
+          is absent. */}
       <input
-        ref={fileRef}
+        ref={cameraRef}
         type="file"
         accept="image/*"
         capture="environment"
         onChange={(e) => handleFile(e.target.files?.[0])}
         className="hidden"
       />
+      {/* No capture hint, so this opens the gallery rather than the camera. */}
+      <input
+        ref={galleryRef}
+        type="file"
+        accept="image/*"
+        onChange={(e) => handleFile(e.target.files?.[0])}
+        className="hidden"
+      />
 
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={() => {
-            reset();
-            onClose();
-          }}
-          className="btn-quiet flex-1 py-3.5 text-sm"
-        >
-          Cancel
-        </button>
-        {lines ? (
+      {lines ? (
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              reset();
+              onClose();
+            }}
+            className="btn-quiet flex-1 py-3.5 text-sm"
+          >
+            Cancel
+          </button>
           <button
             type="button"
             onClick={save}
@@ -280,17 +366,44 @@ export function ReceiptScanner({
               ? "Saving…"
               : `Save ${kept.length} ${kept.length === 1 ? "entry" : "entries"}`}
           </button>
-        ) : (
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2">
           <button
             type="button"
-            onClick={() => fileRef.current?.click()}
-            disabled={busy}
-            className="btn-lime flex-[2] py-3.5 text-sm"
+            onClick={takePhoto}
+            disabled={busy || capturing}
+            className="btn-lime w-full py-3.5 text-sm"
           >
-            {busy ? "Reading…" : "Take a photo"}
+            {busy ? "Reading…" : capturing ? "Camera open…" : "Take a photo"}
           </button>
-        )}
-      </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                reset();
+                onClose();
+              }}
+              className="btn-quiet flex-1 py-3.5 text-sm"
+            >
+              Cancel
+            </button>
+            {/* Always offered, so a blocked or missing camera is never a dead
+                end — and so a receipt you already photographed still works. */}
+            <button
+              type="button"
+              onClick={() => {
+                setError(null);
+                galleryRef.current?.click();
+              }}
+              disabled={busy || capturing}
+              className="btn-quiet flex-1 py-3.5 text-sm"
+            >
+              Choose from gallery
+            </button>
+          </div>
+        </div>
+      )}
 
       {!lines && (
         <p className="mt-3 text-center text-xs" style={{ color: "var(--muted)" }}>
