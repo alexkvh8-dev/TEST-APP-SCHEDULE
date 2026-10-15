@@ -1,0 +1,3 @@
+# The app root ignores out/; here it holds the rendered videos, so keep it.
+!out/
+out/share/
