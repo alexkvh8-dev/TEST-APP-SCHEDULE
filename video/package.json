@@ -1,0 +1,27 @@
+{
+  "name": "laptop-cursor-video",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Remotion animation: a hand cursor tours a 3D laptop dashboard and settles on one icon",
+  "scripts": {
+    "studio": "remotion studio src/index.ts",
+    "render": "remotion render src/index.ts LaptopCursor out/laptop-cursor-1080p60.mp4",
+    "render:square": "remotion render src/index.ts LaptopCursorSquare out/laptop-cursor-square-1080p60.mp4",
+    "render:all": "npm run render && npm run render:square",
+    "still": "remotion still src/index.ts LaptopCursor",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fontsource/inter": "5.3.0",
+    "@remotion/cli": "4.0.535",
+    "@remotion/noise": "4.0.535",
+    "lucide-react": "1.57.0",
+    "react": "19.1.1",
+    "react-dom": "19.1.1",
+    "remotion": "4.0.535"
+  },
+  "devDependencies": {
+    "@types/react": "19.1.12",
+    "typescript": "5.7.3"
+  }
+}
