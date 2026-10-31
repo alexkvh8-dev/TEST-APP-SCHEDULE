@@ -1,6 +1,5 @@
 node_modules/
-out/.segments/
-out/stills*/
-# renders: only the web-sized cut is versioned
-out/*.mp4
+# the repo root ignores every out/ (Next.js export dir); re-include ours for the web cut
+!out/
+out/*
 !out/spotify-every-moment-web.mp4
