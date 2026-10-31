@@ -4,7 +4,7 @@ A 90-second, 1920×1080, 30 fps ad for DaVinci Resolve, built entirely in code (
 and rendered frame by frame. **Picture only — no music or SFX.** Cuts and accents sit on a beat
 grid, ready for a track.
 
-**Watch:** [`out/resolve-web.mp4`](out/resolve-web.mp4) (H.264, BT.709, under 20 MB).
+**Watch:** [`out/resolve-web.mp4`](out/resolve-web.mp4) (H.264, BT.709, 1920×1080, 30 fps, 17.7 MB: two-pass 1.56 Mbps after a light temporal denoise so grain doesn't eat the bitrate).
 
 > Unofficial spec / portfolio piece. Not produced, commissioned or endorsed by Blackmagic Design.
 > DaVinci, DaVinci Resolve, Fairlight, Blackmagic Cloud, the page names, icons and logos are
