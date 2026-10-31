@@ -3,7 +3,16 @@
 A 60-second, 1920×1080, 30 fps motion-graphics ad built entirely in code (three.js + Canvas 2D),
 rendered frame by frame. **Picture only — no music or SFX.**
 
-**Watch:** [`out/spotify-every-moment-web.mp4`](out/spotify-every-moment-web.mp4) (H.264, BT.709, CRF 25, ~20 MB).
+**Watch:** [`out/spotify-every-moment-web.mp4`](out/spotify-every-moment-web.mp4) (H.264 High, BT.709, two-pass 2.35 Mbps, 17.8 MB).
+
+To make the same under-20 MB cut from a fresh render:
+
+```bash
+cd out
+ffmpeg -i spotify-every-moment.mp4 -c:v libx264 -preset veryslow -tune film -b:v 2350k -maxrate 4500k -bufsize 9000k -pass 1 -an -f mp4 /dev/null
+ffmpeg -i spotify-every-moment.mp4 -c:v libx264 -preset veryslow -tune film -b:v 2350k -maxrate 4500k -bufsize 9000k -pass 2 -pix_fmt yuv420p -colorspace bt709 -color_primaries bt709 -color_trc bt709 -movflags +faststart spotify-every-moment-web.mp4
+```
+
 `npm run render` produces the full-quality `out/spotify-every-moment.mp4` (CRF 16 master;
 the film grain makes it large, so it isn't committed).
 Every cut and accent sits on a 120 BPM grid (0.5 s), so a track can be dropped in later and
