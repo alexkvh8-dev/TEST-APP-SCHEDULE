@@ -74,7 +74,8 @@ export default function create(env) {
 
     const white = seg(lt, 7.1, 8.0, E.inQuad);
     return {
-      bloom: [0.38 + swell * 0.6, 0.6, 0.82],
+      // starts on Shot 3's exact bloom so the cut is invisible, then opens up
+      bloom: [lerp(0.32, 0.38, seg(lt, 0, 1.5)) + swell * 0.6, lerp(0.5, 0.6, seg(lt, 0, 1.5)), lerp(0.88, 0.82, seg(lt, 0, 1.5))],
       flash: white,
       flashColor: [0.913, 0.913, 0.93],
       vignette: 0.16 * (1 - white),
