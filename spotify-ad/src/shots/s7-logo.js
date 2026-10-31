@@ -59,6 +59,19 @@ export default function create(env) {
     const g = env.bg, f = env.fg;
     g.fillStyle = '#000';
     g.fillRect(0, 0, W, H);
+    // open on Shot 6's exact background (ink + low green glow) and dissolve it to black
+    const carry = 1 - seg(lt, 0.2, 1.6, E.inOutSine);
+    if (carry > 0) {
+      g.globalAlpha = carry;
+      g.fillStyle = C.ink;
+      g.fillRect(0, 0, W, H);
+      const cg = g.createRadialGradient(W / 2, H * 0.62, 0, W / 2, H * 0.62, W * 0.55);
+      cg.addColorStop(0, 'rgba(30,215,96,0.22)');
+      cg.addColorStop(1, 'rgba(30,215,96,0)');
+      g.fillStyle = cg;
+      g.fillRect(0, 0, W, H);
+      g.globalAlpha = 1;
+    }
     const drift = (x, y, r, col, a) => {
       const gr = g.createRadialGradient(x, y, 0, x, y, r);
       gr.addColorStop(0, col.replace('A', a));
@@ -76,7 +89,7 @@ export default function create(env) {
     const cx = lerp(W / 2, iconX, mv), cy = lerp(H / 2, LOCK_Y, mv);
     const r = lerp(R0, ICON_R, mv);
 
-    const glowA = (lt < SWAP ? 0.12 : 0.2) * (1 + 0.15 * Math.sin(lt * 2.2));
+    const glowA = lerp(0.12, 0.2, seg(lt, 0.6, 1.8)) * (1 + 0.15 * Math.sin(lt * 2.2));
     drift(cx, cy, 700, 'rgba(30,215,96,A)', glowA);
     drift(W * (0.2 + 0.03 * Math.sin(lt * 0.3)), H * 0.85, 900, 'rgba(65,0,245,A)', 0.07 * seg(lt, 2, 4));
     drift(W * (0.85 - 0.03 * Math.sin(lt * 0.25)), H * 0.15, 800, 'rgba(245,115,160,A)', 0.05 * seg(lt, 2, 4));
