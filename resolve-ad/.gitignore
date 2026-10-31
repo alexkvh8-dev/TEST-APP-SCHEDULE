@@ -1,0 +1,5 @@
+node_modules/
+# the repo root ignores every out/ (Next.js export dir); re-include ours for the web cut
+!out/
+out/*
+!out/resolve-web.mp4
