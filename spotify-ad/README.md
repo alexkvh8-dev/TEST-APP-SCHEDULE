@@ -1,7 +1,11 @@
 # "Every Moment" — Spotify 3D motion-graphics spec ad
 
 A 60-second, 1920×1080, 30 fps motion-graphics ad built entirely in code (three.js + Canvas 2D),
-rendered frame-by-frame to `out/spotify-every-moment.mp4`. **Picture only — no music or SFX.**
+rendered frame by frame. **Picture only — no music or SFX.**
+
+**Watch:** [`out/spotify-every-moment-web.mp4`](out/spotify-every-moment-web.mp4) (H.264, BT.709, CRF 25, ~20 MB).
+`npm run render` produces the full-quality `out/spotify-every-moment.mp4` (CRF 16 master;
+the film grain makes it large, so it isn't committed).
 Every cut and accent sits on a 120 BPM grid (0.5 s), so a track can be dropped in later and
 land on the beats.
 
@@ -72,6 +76,7 @@ node scripts/render.mjs --from 12 --to 21 --out out/shot3.mp4
 node scripts/render.mjs --stills 4.95,5.0 --out out/stills
 ```
 
+With software WebGL on 4 vCPUs a full render takes about 45 minutes (~0.7 frames/s).
 The renderer drives headless Chromium one frame at a time, so frames are never dropped, and pipes
 lossless PNGs into x264 (CRF 16, BT.709). Each frame is a pure function of time, so several
 browsers render chunks in parallel and the segments are concatenated.
