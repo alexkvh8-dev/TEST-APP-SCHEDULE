@@ -1,0 +1,13 @@
+{
+  "name": "apple-spec-ad",
+  "private": true,
+  "version": "1.0.0",
+  "description": "60s 3D product film spec ad in Apple's visual language, rendered deterministically with three.js + Playwright + ffmpeg",
+  "scripts": {
+    "preview": "node scripts/serve.mjs",
+    "render": "node scripts/render.mjs --out out/apple-hello.mp4"
+  },
+  "dependencies": {
+    "three": "0.169.0"
+  }
+}
