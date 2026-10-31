@@ -88,7 +88,6 @@ export default function create(env) {
       dirBlur: [0.05 * vel, 0],
       flash: (1 - seg(lt, 0, 0.45, E.outCubic)) * 0.5 + seg(lt, 7.6, 8.0, E.inQuad) * 0.35,
       flashColor: [1, 0.9, 0.75],
-      dof: { focus: camera.position.distanceTo(new THREE.Vector3(lerp(-3.4, 3.7, p), 0, 0)), aperture: 0.001, maxblur: 0.006 },
     };
   };
   return shot;

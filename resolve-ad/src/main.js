@@ -21,6 +21,8 @@ import { makeFootage } from './lib/footage.js';
 export const W = 1920, H = 1080, FPS = 30, DURATION = 90;
 const params = new URLSearchParams(location.search);
 const RENDER = params.has('render');
+// profiling switches: ?nodof ?nostreak ?nobloom ?msaa=N
+const OPT = { dof: !params.has('nodof'), streak: !params.has('nostreak'), bloom: !params.has('nobloom'), msaa: Number(params.get('msaa') ?? 2) };
 if (RENDER) document.body.classList.add('render');
 
 const renderer = new THREE.WebGLRenderer({ antialias: false, preserveDrawingBuffer: true, powerPreference: 'high-performance' });
@@ -51,7 +53,7 @@ hudScene.add(new THREE.Mesh(
   new THREE.MeshBasicMaterial({ map: fg.tex, transparent: true, depthTest: false, depthWrite: false })
 ));
 
-const rt = new THREE.WebGLRenderTarget(W, H, { type: THREE.HalfFloatType, samples: 4 });
+const rt = new THREE.WebGLRenderTarget(W, H, { type: THREE.HalfFloatType, samples: OPT.msaa });
 const composer = new EffectComposer(renderer, rt);
 composer.setPixelRatio(1);
 composer.setSize(W, H);
@@ -101,7 +103,8 @@ function renderAt(t) {
   scenePass.scene = shot.scene;
   scenePass.camera = shot.camera;
   [bloom.strength, bloom.radius, bloom.threshold] = fx.bloom;
-  bokeh.enabled = !!fx.dof;
+  bokeh.enabled = !!fx.dof && OPT.dof;
+  bloom.enabled = OPT.bloom;
   if (fx.dof) {
     bokeh.scene = shot.scene;
     bokeh.camera = shot.camera;
@@ -109,7 +112,7 @@ function renderAt(t) {
     bokeh.uniforms.aperture.value = fx.dof.aperture;
     bokeh.uniforms.maxblur.value = fx.dof.maxblur ?? 0.012;
   }
-  streak.active = fx.streak > 0.001;
+  streak.active = fx.streak > 0.001 && OPT.streak;
   streak.material.uniforms.uThreshold.value = fx.streakThreshold;
   const u = finalPass.uniforms;
   u.uDistort.value = fx.distort;

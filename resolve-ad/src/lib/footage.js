@@ -45,7 +45,7 @@ export const PRESETS = {
 
 export function makeFootage(env) {
   const { THREE, renderer } = env;
-  const rt = new THREE.WebGLRenderTarget(1280, 720, { type: THREE.HalfFloatType, samples: 4 });
+  const rt = new THREE.WebGLRenderTarget(1280, 720, { type: THREE.HalfFloatType, samples: 2 });
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(40, 16 / 9, 0.2, 600);
 

@@ -33,7 +33,7 @@ const args = Object.fromEntries(
 const FPS = Number(args.fps || 30);
 const WORKERS = Number(args.workers || 3);
 const FROM = Number(args.from || 0);
-const TO = Number(args.to || 60);
+const TO = Number(args.to || 90);
 const CHROME_ARGS = ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'];
 
 async function openPage(port) {

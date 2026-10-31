@@ -149,7 +149,6 @@ export default function create(env) {
       flashColor: [1, 0.86, 0.66],
       zoomBlur: (1 - seg(lt, 0, 0.6, E.outQuad)) * 0.25,
       dirBlur: [clamp((E.inExpo(seg(lt, 8.5, 9.0)) - E.inExpo(seg(lt, 8.45, 8.95))) * 6, 0, 0.28), 0],
-      dof: { focus: camera.position.distanceTo(new THREE.Vector3(...ck(lt, 1))), aperture: 0.0012, maxblur: 0.008 },
     };
   };
   return shot;
