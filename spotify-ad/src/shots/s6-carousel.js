@@ -11,6 +11,10 @@ import { lerp, seg, clamp, TAU } from '../lib/util.js';
 
 export const SPHERE_R = 0.55;
 export const CAM_END = [0, 0, 4.0];
+// Green glow light that lifts the sphere as it absorbs the covers. It sits along the key
+// light's direction so its catchlight lands inside the key's highlight instead of
+// printing a lone dot on the middle of the sphere. Shot 7 starts with the same light.
+export const GLOW = { pos: [-0.93, 1.25, 1.56], max: 16 };
 
 export function sphereMaterial(THREE) {
   return new THREE.MeshPhysicalMaterial({
@@ -134,11 +138,11 @@ export default function create(env) {
     dot.position.copy(pos);
     dot.scale.setScalar(Math.max(0.0001, r));
     dot.visible = r > 0.001;
-    glow.intensity = 2.5 * seg(lt, 6.0, 7.8, E.inOutSine);
+    glow.intensity = GLOW.max * seg(lt, 6.0, 7.8, E.inOutSine);
     // the back rim only serves the type; it's gone before the sphere forms, so the
     // sphere's lighting at the cut is exactly Shot 7's
     back.intensity = 0.9 * (1 - seg(lt, 4.9, 5.9, E.inOutSine));
-    glow.position.set(0, 0, 1.2);
+    glow.position.set(...GLOW.pos);
 
     // ---- camera ----
     const push = seg(lt, 5.8, 8.4, E.inOutCubic);

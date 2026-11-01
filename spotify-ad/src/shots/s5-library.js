@@ -49,7 +49,7 @@ const VERT = /* glsl */ `
 
 const FRAG = /* glsl */ `
   uniform sampler2D t0, t1, t2;
-  uniform float uR, uSweep, uFogNear, uFogFar;
+  uniform float uR, uSweep, uFogNear, uFogFar, uDim;
   uniform vec3 uFog;
   varying vec2 vUv; varying float vLayer; varying float vId; varying float vShade; varying float vAlpha;
   varying float vDepth; varying vec3 vWorld;
@@ -75,6 +75,7 @@ const FRAG = /* glsl */ `
     float s = exp(-pow((vWorld.x + vWorld.y * 0.45 - uSweep) / 1.5, 2.0));
     col += vec3(1.0, 0.98, 0.95) * 0.14 * s;
     col = mix(col, uFog, smoothstep(uFogNear, uFogFar, vDepth));
+    col = mix(uFog, col, uDim);
     float a = mask * vAlpha;
     if (a < 0.01) discard;
     gl_FragColor = vec4(col, a);
@@ -98,7 +99,7 @@ export default function create(env) {
   const uniforms = (maps) => ({
     t0: { value: maps[0] }, t1: { value: maps[1] }, t2: { value: maps[2] },
     uR: { value: TILE_R }, uSweep: { value: -40 }, uFogNear: { value: 16 }, uFogFar: { value: 34 }, uFog: { value: fog },
-    uLayer: { value: 0 }, uShade: { value: 1 }, uAlpha: { value: 1 },
+    uLayer: { value: 0 }, uShade: { value: 1 }, uAlpha: { value: 1 }, uDim: { value: 1 },
   });
   const wallMat = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, uniforms: uniforms(atl), transparent: true, side: THREE.DoubleSide });
 
@@ -173,7 +174,7 @@ export default function create(env) {
   const whipAngle = (lt) => E.inExpo(seg(lt, 8.55, 10.0)) * 0.95;
 
   function chips(f, lt) {
-    const a = E.outCubic(seg(lt, 0.45, 0.95));
+    const a = E.outCubic(seg(lt, 0.45, 0.95)) * (1 - seg(lt, 8.75, 9.35, E.inOutSine));
     if (a <= 0) return;
     f.save();
     f.globalAlpha = a;
@@ -238,7 +239,11 @@ export default function create(env) {
     });
     const sweep = lerp(-30, 30, seg(lt, 2.4, 4.6, E.inOutSine)) + lerp(0, 60, seg(lt, 7.8, 9.4, E.inOutSine));
     wallMat.uniforms.uSweep.value = sweep;
-    heroes.forEach((m) => (m.material.uniforms.uSweep.value = sweep));
+    // the whip carries us off the lit wall: it sinks toward the ink so the luminance
+    // meets Shot 6's dark opening frame
+    const dim = 1 - 0.8 * seg(lt, 9.0, 10.0, E.inCubic);
+    wallMat.uniforms.uDim.value = dim;
+    heroes.forEach((m) => { m.material.uniforms.uSweep.value = sweep; m.material.uniforms.uDim.value = dim; });
 
     // ---- camera: pull back to reveal, slow drift, whip out ----
     const pull = seg(lt, 0.2, 3.0, E.inOutCubic);

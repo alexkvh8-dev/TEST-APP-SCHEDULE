@@ -79,7 +79,7 @@ export function makePhone(THREE, RB, { screen, envMap = null, frame = '#3a3b41',
   const displayZ = D / 2 + 0.0013;
   const dispMat = new THREE.MeshPhysicalMaterial({
     color: '#000000', emissive: '#ffffff', emissiveMap: screen, emissiveIntensity: 1,
-    roughness: 0.06, clearcoat: 0.35, clearcoatRoughness: 0.08, envMapIntensity: 0.15,
+    roughness: 0.06, clearcoat: 0.35, clearcoatRoughness: 0.08, envMapIntensity: 0.08,
     alphaMap: roundMask(THREE, 190, 410, 22), alphaTest: 0.5,
   });
   // three.js uses scene.environmentIntensity (not envMapIntensity) for materials that

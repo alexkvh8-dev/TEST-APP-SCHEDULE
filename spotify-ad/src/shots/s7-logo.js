@@ -8,7 +8,7 @@ import { C, drawSpotifyIcon, roundRect } from '../lib/brand.js';
 import * as E from '../lib/ease.js';
 import { lerp, seg, clamp, TAU } from '../lib/util.js';
 import { kText, font, measure } from '../lib/type.js';
-import { SPHERE_R, CAM_END, sphereMaterial } from './s6-carousel.js';
+import { SPHERE_R, CAM_END, GLOW, sphereMaterial } from './s6-carousel.js';
 
 export default function create(env) {
   const { THREE, W, H } = env;
@@ -23,8 +23,8 @@ export default function create(env) {
   const key = new THREE.DirectionalLight('#ffffff', 1.6);
   key.position.set(-3, 4, 5);
   scene.add(key);
-  const glow = new THREE.PointLight(C.green, 2.5, 8, 2);
-  glow.position.set(0, 0, 1.2);
+  const glow = new THREE.PointLight(C.green, GLOW.max, 8, 2);
+  glow.position.set(...GLOW.pos);
   scene.add(glow);
 
   const mat = sphereMaterial(THREE);
@@ -53,7 +53,7 @@ export default function create(env) {
     mat.clearcoat = gloss;
     mat.roughness = lerp(0.18, 1, 1 - gloss);
     mat.specularIntensity = gloss;
-    glow.intensity = 2.5 * (1 - flatP);
+    glow.intensity = GLOW.max * (1 - flatP);
 
     // ---- background ----
     const g = env.bg, f = env.fg;
