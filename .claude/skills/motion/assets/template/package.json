@@ -1,0 +1,13 @@
+{
+  "name": "motion-film",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Code-built motion-graphics film: three.js + Canvas 2D, rendered deterministically with Playwright + ffmpeg",
+  "scripts": {
+    "preview": "node scripts/serve.mjs",
+    "render": "node scripts/render.mjs"
+  },
+  "dependencies": {
+    "three": "0.169.0"
+  }
+}
