@@ -1,0 +1,19 @@
+{
+  "name": "google-spec-ad",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Unofficial 60 s Google spec ad: three.js + Canvas 2D motion graphics, rendered frame-accurately by the motion skill's Playwright pipeline or by HyperFrames",
+  "scripts": {
+    "preview": "node scripts/serve.mjs",
+    "render": "node scripts/render.mjs",
+    "hf:lint": "hyperframes lint .",
+    "hf:render": "hyperframes render -c ./hyperframes.html -o out/hyperframes.mp4"
+  },
+  "dependencies": {
+    "three": "0.169.0",
+    "gsap": "3.12.5"
+  },
+  "devDependencies": {
+    "hyperframes": "0.8.226"
+  }
+}
