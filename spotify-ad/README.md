@@ -3,14 +3,14 @@
 A 60-second, 1920×1080, 30 fps motion-graphics ad built entirely in code (three.js + Canvas 2D),
 rendered frame by frame. **Picture only — no music or SFX.**
 
-**Watch:** [`out/spotify-every-moment-web.mp4`](out/spotify-every-moment-web.mp4) (H.264 High, BT.709, two-pass 2.35 Mbps, 17.8 MB).
+**Watch:** [`out/spotify-every-moment-web.mp4`](out/spotify-every-moment-web.mp4) (H.264 High, BT.709, two-pass 2.5 Mbps after a light temporal denoise so grain doesn't eat the bitrate, 18.7 MB).
 
 To make the same under-20 MB cut from a fresh render:
 
 ```bash
 cd out
-ffmpeg -i spotify-every-moment.mp4 -c:v libx264 -preset veryslow -tune film -b:v 2350k -maxrate 4500k -bufsize 9000k -pass 1 -an -f mp4 /dev/null
-ffmpeg -i spotify-every-moment.mp4 -c:v libx264 -preset veryslow -tune film -b:v 2350k -maxrate 4500k -bufsize 9000k -pass 2 -pix_fmt yuv420p -colorspace bt709 -color_primaries bt709 -color_trc bt709 -movflags +faststart spotify-every-moment-web.mp4
+ffmpeg -i spotify-every-moment.mp4 -vf hqdn3d=1:1:3:3 -c:v libx264 -preset veryslow -tune film -b:v 2500k -maxrate 4800k -bufsize 9600k -pass 1 -an -f mp4 /dev/null
+ffmpeg -i spotify-every-moment.mp4 -vf hqdn3d=1:1:3:3 -c:v libx264 -preset veryslow -tune film -b:v 2500k -maxrate 4800k -bufsize 9600k -pass 2 -pix_fmt yuv420p -colorspace bt709 -color_primaries bt709 -color_trc bt709 -movflags +faststart spotify-every-moment-web.mp4
 ```
 
 `npm run render` produces the full-quality `out/spotify-every-moment.mp4` (CRF 16 master;
@@ -93,7 +93,7 @@ node scripts/render.mjs --from 12 --to 21 --out out/shot3.mp4
 node scripts/render.mjs --stills 4.95,5.0 --out out/stills
 ```
 
-With software WebGL on 4 vCPUs a full render takes about 45 minutes (~0.7 frames/s).
+With software WebGL on 4 vCPUs a full render takes about 40 minutes (~0.8 frames/s).
 The renderer drives headless Chromium one frame at a time, so frames are never dropped, and pipes
 lossless PNGs into x264 (CRF 16, BT.709). Each frame is a pure function of time, so several
 browsers render chunks in parallel and the segments are concatenated.
