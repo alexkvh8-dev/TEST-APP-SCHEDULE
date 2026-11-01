@@ -15,14 +15,14 @@ export const CAM_END = [0, 0, 4.0];
 export function sphereMaterial(THREE) {
   return new THREE.MeshPhysicalMaterial({
     color: C.green, roughness: 0.18, clearcoat: 1, clearcoatRoughness: 0.08,
-    emissive: C.green, emissiveIntensity: 0.12, envMapIntensity: 0.45,
+    emissive: C.green, emissiveIntensity: 0.1, envMapIntensity: 0.8,
   });
 }
 
 export default function create(env) {
   const { THREE, W, H } = env;
   const scene = new THREE.Scene();
-  scene.environment = env.envMap;
+  scene.environment = env.envStudio;
   const camera = new THREE.PerspectiveCamera(35, W / H, 0.1, 100);
   const shot = { name: 'S6 Carousel', start: 43, end: 51.5, scene, camera, useBg: true };
 
@@ -47,8 +47,8 @@ export default function create(env) {
     tex.colorSpace = THREE.SRGBColorSpace;
     tex.anisotropy = 8;
     const grp = new THREE.Group();
-    const front = new THREE.Mesh(new THREE.PlaneGeometry(S, S), new THREE.MeshBasicMaterial({ map: tex, alphaTest: 0.5 }));
-    const backM = new THREE.Mesh(new THREE.PlaneGeometry(S, S), new THREE.MeshBasicMaterial({ color: '#1c1c1c', map: tex, alphaTest: 0.5 }));
+    const front = new THREE.Mesh(new THREE.PlaneGeometry(S, S), new THREE.MeshBasicMaterial({ map: tex, alphaTest: 0.5, transparent: true }));
+    const backM = new THREE.Mesh(new THREE.PlaneGeometry(S, S), new THREE.MeshBasicMaterial({ color: '#1c1c1c', map: tex, alphaTest: 0.5, transparent: true }));
     backM.rotation.y = Math.PI;
     backM.material.color.set('#2a2a2a');
     grp.add(front, backM);
@@ -91,19 +91,24 @@ export default function create(env) {
 
   const yawAt = (lt) => 0.6 * (1 - E.outExpo(seg(lt, 0, 1.0)));
 
-  shot.update = (lt) => {
+  shot.update = (lt, t) => {
     // ---- ring ----
-    const spiral = (i) => seg(lt, 5.0 + i * 0.045, 7.1 + i * 0.045, E.inCubic);
+    // One continuous, gently accelerating spiral (peak ~1.6 rad/s, ~3° a frame), so
+    // nothing strobes; covers shrink and fade as they reach the sphere.
+    scene.environmentRotation.set(0, t * 0.06, 0);
+    const spiral = (i) => seg(lt, 5.1 + i * 0.05, 7.6 + i * 0.05, E.inOutCubic);
     covers.forEach((cv, i) => {
       const p = spiral(i);
       const fin = E.outExpo(seg(lt, -0.35 + i * 0.03, 0.9 + i * 0.03));
       const rad = lerp(6, R, fin) * (1 - p);
-      const th = (i / N) * TAU + lt * 0.38 + 6 * p * p * p + (1 - fin) * 1.2;
+      const th = (i / N) * TAU + lt * 0.38 + 1.8 * E.inOutSine(p) + (1 - fin) * 1.2;
       const y = 0.12 * Math.sin(lt * 1.8 + i * 0.9) * (1 - p) + (1 - fin) * (i % 2 ? 1.5 : -1.5);
       cv.position.set(rad * Math.sin(th), y, rad * Math.cos(th));
       cv.rotation.set(0.08 * Math.sin(lt * 1.5 + i), th, 0.05 * Math.sin(lt + i * 2));
       const sc = Math.max(0.0001, (1 - Math.pow(p, 1.4)) * fin);
       cv.scale.setScalar(sc);
+      const fade = 1 - seg(p, 0.62, 0.95, E.inOutSine);
+      cv.children.forEach((m) => (m.material.opacity = fade));
       const facing = (Math.cos(th) + 1) / 2;
       cv.children[0].material.color.setScalar(lerp(0.4, 1, facing));
       cv.visible = sc > 0.002;
@@ -119,26 +124,24 @@ export default function create(env) {
     });
 
     // ---- the full stop: pops in, hops to centre, swells as covers are absorbed ----
-    const pin = E.outBack(2.5)(seg(lt, 1.55, 1.95));
-    const hop = seg(lt, 5.1, 5.9, E.inOutCubic);
-    const pos = dotHome.clone().lerp(new THREE.Vector3(0, 0, 0), hop);
-    pos.y += Math.sin(Math.PI * hop) * 0.55;
-    const land = (t0) => { const d = lt - t0; return d < 0 ? 0 : 0.3 * Math.exp(-7 * d) * Math.cos(2 * Math.PI * 3 * d); };
-    const sq = land(5.9);
-    let r = dotR * pin;
-    let absorbed = 0;
-    for (let i = 0; i < N; i++) absorbed += E.kick(lt - (7.1 + i * 0.045), 0.03, 8);
-    r = lerp(r, SPHERE_R, E.outBack(1.3)(seg(lt, 6.0, 7.6)));
-    r *= 1 + 0.035 * Math.min(absorbed, 2);
+    // the full stop pops in once, then everything after is one smooth, unbroken move:
+    // a soft arc to centre and a steady swell (no squash, no overshoot, no pulses)
+    const pin = E.outBack(2.0)(seg(lt, 1.55, 1.95));
+    const glideP = seg(lt, 4.95, 6.35, E.inOutCubic);
+    const pos = dotHome.clone().lerp(new THREE.Vector3(0, 0, 0), glideP);
+    pos.y += Math.sin(Math.PI * glideP) * 0.32;
+    const r = lerp(dotR * pin, SPHERE_R, E.inOutCubic(seg(lt, 5.6, 8.1)));
     dot.position.copy(pos);
-    const stretch = Math.sin(Math.PI * hop) * 0.25;
-    dot.scale.set(r * (1 + sq - stretch * 0.5), r * (1 - sq + stretch), r * (1 + sq - stretch * 0.5));
+    dot.scale.setScalar(Math.max(0.0001, r));
     dot.visible = r > 0.001;
-    glow.intensity = 2.5 * seg(lt, 6.0, 7.4);
+    glow.intensity = 2.5 * seg(lt, 6.0, 7.8, E.inOutSine);
+    // the back rim only serves the type; it's gone before the sphere forms, so the
+    // sphere's lighting at the cut is exactly Shot 7's
+    back.intensity = 0.9 * (1 - seg(lt, 4.9, 5.9, E.inOutSine));
     glow.position.set(0, 0, 1.2);
 
     // ---- camera ----
-    const push = seg(lt, 6.0, 8.3, E.swoop);
+    const push = seg(lt, 5.8, 8.4, E.inOutCubic);
     const cp = [lerp(0, CAM_END[0], push), lerp(1.05, CAM_END[1], push), lerp(7.6, CAM_END[2], push)];
     const look = [0, lerp(0.05, 0, push), 0];
     camera.position.set(...cp);
@@ -153,7 +156,7 @@ export default function create(env) {
     g.fillStyle = C.ink;
     g.fillRect(0, 0, W, H);
     const gr = g.createRadialGradient(W / 2, H * 0.62, 0, W / 2, H * 0.62, W * 0.55);
-    const ga = 0.12 + 0.1 * seg(lt, 6.0, 7.5);
+    const ga = 0.12 + 0.1 * seg(lt, 6.0, 7.8, E.inOutSine);
     gr.addColorStop(0, `rgba(30,215,96,${ga})`);
     gr.addColorStop(1, 'rgba(30,215,96,0)');
     g.fillStyle = gr;
@@ -164,8 +167,6 @@ export default function create(env) {
       bloom: [0.3, 0.45, 0.93],
       dirBlur: [blur, 0],
       ca: 0.0012 + blur * 0.02,
-      flash: E.kick(lt - 7.2, 0.03, 6) * 0.08,
-      flashColor: [0.12, 0.84, 0.38],
       vignette: 0.32,
     };
   };

@@ -13,7 +13,7 @@ import { SPHERE_R, CAM_END, sphereMaterial } from './s6-carousel.js';
 export default function create(env) {
   const { THREE, W, H } = env;
   const scene = new THREE.Scene();
-  scene.environment = env.envMap;
+  scene.environment = env.envStudio;
   const camera = new THREE.PerspectiveCamera(35, W / H, 0.1, 100);
   camera.position.set(...CAM_END);
   camera.lookAt(0, 0, 0);
@@ -34,22 +34,22 @@ export default function create(env) {
 
   // On-screen radius of the sphere/disc (perspective, camera on axis).
   const R0 = (SPHERE_R / (CAM_END[2] * Math.tan(THREE.MathUtils.degToRad(17.5)))) * (H / 2);
-  const SWAP = 1.25;
+  const SWAP = 1.95;
 
-  shot.update = (lt) => {
-    // ---- 3D: coin-turn + flatten + material morph ----
-    const p = seg(lt, 0.25, SWAP, E.inOutExpo);
-    const flatP = seg(lt, 0.45, SWAP - 0.1);
+  shot.update = (lt, t) => {
+    // ---- 3D: a slow coin turn as it flattens, material morphs to flat brand green ----
+    scene.environmentRotation.set(0, t * 0.06, 0); // continuous with Shot 6's reflections
+    const p = seg(lt, 0.2, 1.85, E.inOutCubic);
+    const flatP = seg(lt, 0.9, 1.85, E.inOutSine);
     sphere.visible = lt < SWAP;
-    const bounce = E.kick(lt, 0.03, 7) * 0.04;
-    const bulge = Math.sin(Math.PI * p) * 0.05;
-    sphere.scale.set(SPHERE_R * (1 + bulge + bounce), SPHERE_R * (1 + bulge + bounce), SPHERE_R * lerp(1, 0.002, p));
-    sphere.rotation.set(0, 1.1 * Math.sin(Math.PI * p), 0);
+    const bulge = Math.sin(Math.PI * p) * 0.03;
+    sphere.scale.set(SPHERE_R * (1 + bulge), SPHERE_R * (1 + bulge), SPHERE_R * lerp(1, 0.002, p));
+    sphere.rotation.set(0, 0.75 * Math.sin(Math.PI * p), 0);
     // reflections die first, then the albedo hands over to flat emissive brand green
-    const gloss = 1 - seg(lt, 0.3, 0.95);
+    const gloss = 1 - seg(lt, 0.6, 1.6, E.inOutSine);
     mat.color.copy(green).lerp(black, flatP);
     mat.emissiveIntensity = lerp(0.12, 1, flatP);
-    mat.envMapIntensity = 0.45 * gloss;
+    mat.envMapIntensity = 0.8 * gloss;
     mat.clearcoat = gloss;
     mat.roughness = lerp(0.18, 1, 1 - gloss);
     mat.specularIntensity = gloss;
@@ -85,17 +85,17 @@ export default function create(env) {
     const wordW = measure(f, WORD, WSIZE, 800, -0.03);
     const totalW = ICON_R * 2 + GAP + wordW;
     const iconX = W / 2 - totalW / 2 + ICON_R, LOCK_Y = 455;
-    const mv = seg(lt, 2.45, 3.35, E.inOutExpo);
+    const mv = seg(lt, 3.15, 4.15, E.inOutCubic);
     const cx = lerp(W / 2, iconX, mv), cy = lerp(H / 2, LOCK_Y, mv);
     const r = lerp(R0, ICON_R, mv);
 
     const glowA = lerp(0.12, 0.2, seg(lt, 0.6, 1.8)) * (1 + 0.15 * Math.sin(lt * 2.2));
     drift(cx, cy, 700, 'rgba(30,215,96,A)', glowA);
-    drift(W * (0.2 + 0.03 * Math.sin(lt * 0.3)), H * 0.85, 900, 'rgba(65,0,245,A)', 0.07 * seg(lt, 2, 4));
-    drift(W * (0.85 - 0.03 * Math.sin(lt * 0.25)), H * 0.15, 800, 'rgba(245,115,160,A)', 0.05 * seg(lt, 2, 4));
+    drift(W * (0.2 + 0.03 * Math.sin(lt * 0.3)), H * 0.85, 900, 'rgba(65,0,245,A)', 0.07 * seg(lt, 2.7, 4.7));
+    drift(W * (0.85 - 0.03 * Math.sin(lt * 0.25)), H * 0.15, 800, 'rgba(245,115,160,A)', 0.05 * seg(lt, 2.7, 4.7));
 
     // gentle overall push-in for life on the end card
-    const z = 1 + 0.03 * seg(lt, 2.5, 8.5, E.outSine);
+    const z = 1 + 0.03 * seg(lt, 3.2, 8.5, E.outSine);
     f.save();
     f.translate(W / 2, H / 2);
     f.scale(z, z);
@@ -103,7 +103,7 @@ export default function create(env) {
 
     if (lt >= SWAP) {
       // ripple when the arcs finish
-      const rp = seg(lt, 2.05, 3.0);
+      const rp = seg(lt, 2.75, 3.7);
       if (rp > 0 && rp < 1) {
         f.save();
         f.strokeStyle = C.green;
@@ -115,7 +115,7 @@ export default function create(env) {
         f.restore();
       }
       const arcs = [0, 1, 2].map((i) => E.inOutCubic(seg(lt, SWAP + 0.1 + i * 0.13, SWAP + 0.65 + i * 0.13)));
-      drawSpotifyIcon(f, cx, cy, r * (1 + 0.04 * E.kick(lt - 2.0, 0.03, 6)), { arcs });
+      drawSpotifyIcon(f, cx, cy, r * (1 + 0.03 * E.kick(lt - 2.7, 0.05, 5)), { arcs });
 
       // wordmark emerges from behind the icon
       f.save();
@@ -124,16 +124,16 @@ export default function create(env) {
       f.clip();
       kText(f, WORD, {
         x: iconX + ICON_R + GAP, y: LOCK_Y + WSIZE * 0.36, size: WSIZE, weight: 800, tracking: -0.03,
-        mode: 'emerge', t: lt - 2.75, dur: 0.9, stagger: 0.04, ease: E.outExpo, mask: false, order: 'rtl',
+        mode: 'emerge', t: lt - 3.45, dur: 0.9, stagger: 0.04, ease: E.outExpo, mask: false, order: 'rtl',
       });
       f.restore();
 
       kText(f, 'Every moment has a sound.', {
-        x: W / 2, y: 690, size: 56, weight: 700, color: C.mute, align: 'center', unit: 'word', stagger: 0.07, dur: 0.7, t: lt - 3.6, tracking: -0.01,
+        x: W / 2, y: 690, size: 56, weight: 700, color: C.mute, align: 'center', unit: 'word', stagger: 0.07, dur: 0.7, t: lt - 4.3, tracking: -0.01,
       });
 
       // call to action
-      const cp = E.outBack(1.9)(seg(lt, 4.25, 4.85));
+      const cp = E.outBack(1.7)(seg(lt, 4.95, 5.6));
       if (cp > 0) {
         const bw = 560, bh = 108, bx = W / 2, by = 828;
         f.save();
@@ -144,7 +144,7 @@ export default function create(env) {
         roundRect(f, -bw / 2, -bh / 2, bw, bh, bh / 2);
         f.fill();
         // shine sweep
-        const sp = seg(lt, 5.7, 6.4, E.inOutCubic);
+        const sp = seg(lt, 6.4, 7.1, E.inOutCubic);
         if (sp > 0 && sp < 1) {
           f.save();
           roundRect(f, -bw / 2, -bh / 2, bw, bh, bh / 2);

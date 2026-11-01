@@ -2,14 +2,14 @@
 // Spotify-style duotone cards. Each mood gets a colour pair, a giant word, an outline
 // marquee and a glossy 3D object with its own personality (bounce / snap / wobble /
 // rock). Each object flies into the lens while a circle of the next colour opens from
-// it — the object "carries" the next scene in. The summary ends on 32 bars drawn at the
-// exact screen positions of Shot 5's front row (projected through Shot 5's camera).
+// it — the object "carries" the next scene in. The summary deals the four mood mixes out
+// as playlist covers, landing on the exact screen rects of Shot 5's hero tiles, so the
+// cut into the 3D library wall is invisible.
 
-import { C, drawSpotifyIcon, roundRect } from '../lib/brand.js';
+import { C, drawSpotifyIcon } from '../lib/brand.js';
 import * as E from '../lib/ease.js';
 import { lerp, seg, clamp, TAU, rng } from '../lib/util.js';
 import { kText, font, measure } from '../lib/type.js';
-import { NX, colX, Z_FRONT, FOOT, barHeight, columnColor } from './s5-field.js';
 
 const CARD = 2.6;
 const CARDS = [
@@ -173,52 +173,40 @@ export default function create(env) {
     });
   }
 
-  // Shot 5's opening camera, projected: rect of bar ix at height h.
-  const _a = new THREE.Vector3(), _b = new THREE.Vector3();
-  function colRect(ix, h) {
-    const cam = env.shared.field.camera;
-    _a.set(colX(ix) - FOOT / 2, 0, Z_FRONT + FOOT / 2).project(cam);
-    _b.set(colX(ix) + FOOT / 2, h, Z_FRONT + FOOT / 2).project(cam);
-    const x0 = (_a.x * 0.5 + 0.5) * W, x1 = (_b.x * 0.5 + 0.5) * W;
-    const y0 = (-_a.y * 0.5 + 0.5) * H, y1 = (-_b.y * 0.5 + 0.5) * H;
-    return { x: x0, w: x1 - x0, y: y1, h: y0 - y1, base: y0 };
-  }
-  const GROUP_COLS = [C.pink, C.blue, C.lime, C.yellow];
-
+  // The four mixes are dealt out as covers onto Shot 5's hero tiles (projected through
+  // Shot 5's opening camera). Each starts as a chip of its mood colour, rises into place on
+  // a soft spring and "prints" its artwork; everything is settled well before the cut.
+  const SUM_FX = { bloom: [0.32, 0.45, 0.88], vignette: 0.32 }; // = Shot 5's first frame
   function summary(g, f, t) {
     const ls = t - SUM_T0;
+    const lib = env.shared.library;
     kText(f, 'For every mood.', {
-      x: W / 2, y: 330, size: 130, align: 'center', t: ls - 0.12, stagger: 0.03, out: ls - 1.18, outStagger: 0.015, outDur: 0.35,
+      x: W / 2, y: 290, size: 120, align: 'center', t: ls - 0.08, stagger: 0.03, out: ls - 1.0, outStagger: 0.012, outDur: 0.35,
       colorAt: (i) => (i === 14 ? C.green : null),
     });
-    const split = seg(ls, 0.62, 1.02, E.inOutExpo);
-    const cols = [];
-    for (let ix = 0; ix < NX; ix++) cols.push(colRect(ix, barHeight(ix, 0, t)));
-    for (let gi = 0; gi < 4; gi++) {
-      const a = cols[gi * 8], b = cols[gi * 8 + 7];
-      const gx = a.x, gw = b.x + b.w - a.x;
-      let gh = 0;
-      for (let k = 0; k < 8; k++) gh += cols[gi * 8 + k].h;
-      gh /= 8;
-      const rise = E.outBack(1.6)(seg(ls, 0.12 + gi * 0.06, 0.55 + gi * 0.06));
-      if (split <= 0) {
-        // before the split each group reads as one rounded pill
-        g.fillStyle = GROUP_COLS[gi];
-        roundRect(g, gx, a.base - gh * 0.9 * rise, gw, gh * 0.9 * rise, Math.min(26, gh * 0.45 * rise));
-        g.fill();
-        continue;
+    lib.heroRects.forEach(([x, y, w, h], i) => {
+      const ts = 0.12 + i * 0.07;
+      const p = seg(ls, ts, ts + 0.62);
+      if (p <= 0) return;
+      const rise = E.outBack(1.25)(p);
+      const grow = E.outCubic(seg(ls, ts, ts + 0.42));
+      const cx = x + w / 2, cy = y + h / 2 + (1 - rise) * 170;
+      // a pill that widens into the square tile
+      const tw = w * lerp(0.42, 1, grow), th = h * lerp(0.18, 1, E.outCubic(seg(ls, ts + 0.04, ts + 0.5)));
+      const rad = lerp(Math.min(tw, th) / 2, w * lib.radius, E.inOutSine(seg(ls, ts + 0.1, ts + 0.55)));
+      const art = E.inOutSine(seg(ls, ts + 0.22, ts + 0.72));
+      g.save();
+      g.beginPath();
+      g.roundRect(cx - tw / 2, cy - th / 2, tw, th, rad);
+      g.clip();
+      g.fillStyle = CARDS[i].bg;
+      g.fillRect(cx - tw / 2, cy - th / 2, tw, th);
+      if (art > 0) {
+        g.globalAlpha = art;
+        g.drawImage(lib.heroCanvases[i], cx - w / 2, cy - h / 2, w, h);
       }
-      for (let k = 0; k < 8; k++) {
-        const ix = gi * 8 + k, c = cols[ix];
-        const sx = gx + (gw / 8) * k, sw = gw / 8 + 0.6;
-        const x = lerp(sx, c.x, split), w = lerp(sw, c.w, split);
-        const hh = lerp(gh * 0.9, c.h, split) * rise;
-        const col = new THREE.Color(GROUP_COLS[gi]).lerp(columnColor(THREE, ix), split);
-        g.fillStyle = '#' + col.getHexString(THREE.SRGBColorSpace);
-        roundRect(g, x, c.base - hh, w, hh, Math.min(w / 2, hh / 2, 26 * (1 - split)));
-        g.fill();
-      }
-    }
+      g.restore();
+    });
   }
 
   shot.update = (lt, t) => {
@@ -235,7 +223,7 @@ export default function create(env) {
       g.fillStyle = C.ink;
       g.fillRect(0, 0, W, H);
       summary(g, f, t);
-      return { bloom: [0.3, 0.4, 0.92], vignette: 0.25 };
+      return { ...SUM_FX };
     }
     const c = CARDS[ci], lc = t - c.t0;
     const next = CARDS[ci + 1] ? CARDS[ci + 1].bg : C.ink;

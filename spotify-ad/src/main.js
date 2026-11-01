@@ -16,12 +16,13 @@ import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import { loadFonts } from './lib/type.js';
 import { FinalShader } from './lib/fx.js';
 import { makeCover, makeHeroArt, COVER_SPECS } from './lib/covers.js';
+import { studioEnv } from './lib/studio.js';
 
 import s1 from './shots/s1-pulse.js';
 import s2 from './shots/s2-vinyl.js';
 import s3 from './shots/s3-phone.js';
 import s4 from './shots/s4-moods.js';
-import s5 from './shots/s5-field.js';
+import s5 from './shots/s5-library.js';
 import s6 from './shots/s6-carousel.js';
 import s7 from './shots/s7-logo.js';
 
@@ -125,6 +126,7 @@ async function boot() {
   const font3d = new Font(await new TTFLoader().loadAsync('./assets/fonts/Figtree-900.ttf'));
   const env = {
     THREE, W, H, renderer, envMap, font3d, project, RoundedBox: RoundedBoxGeometry, TextGeometry,
+    envStudio: studioEnv(THREE, renderer, 'dark'),
     bg: bg.ctx, fg: fg.ctx,
     covers: COVER_SPECS.map((s, i) => makeCover(s, 512, i + 7)),
     heroArt: makeHeroArt(1024),
