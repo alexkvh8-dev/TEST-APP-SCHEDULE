@@ -367,7 +367,8 @@ export function Watch({ t }: { t: number }) {
             width: lerp(bw, 1920, grow),
             height: lerp(bh, 1080, grow),
             background: C.red,
-            borderRadius: lerp(2, 0, grow),
+            // A pill while it grows (echoing the icon it becomes), square at both ends.
+            borderRadius: Math.min(lerp(bh, 1080, grow) / 2, 4 + 120 * Math.sin(Math.PI * grow)),
           }}
         />
       )}

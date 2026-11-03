@@ -48,7 +48,7 @@ function GhostRow({ t, y, dir, offset }: { t: number; y: number; dir: 1 | -1; of
 export function EndCard({ t }: { t: number }) {
   // Icon height over time: full-frame -> hero -> lockup.
   const shrink = seg(t, 7.0, 7.5, E.smooth);
-  const lock = seg(t, 7.86, 8.32, E.smooth);
+  const lock = seg(t, 7.84, 8.26, E.smooth);
   const heroK = HERO_H / ICON_BOX.h;
   const k = lock > 0 ? logLerp(heroK, LOCK_K, lock) : logLerp(K_FULL, heroK, shrink);
   const iconH = ICON_BOX.h * k;
@@ -69,7 +69,7 @@ export function EndCard({ t }: { t: number }) {
   const ring = seg(t, 7.48, 8.0, E.outCubic);
   const glow = seg(t, 7.3, 7.9, E.inOutSine) * (0.85 + 0.15 * Math.sin(t * 2.4));
 
-  const word = seg(t, 7.96, 8.42, E.snap);
+  const word = seg(t, 8.1, 8.52, E.snap);
   const push = 1 + 0.035 * seg(t, 7.5, 10, E.inOutSine);
 
   const ctaIn = seg(t, 8.55, 8.95, E.outBack(1.5));
